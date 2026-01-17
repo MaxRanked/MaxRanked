@@ -4,11 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "opennext build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "preview": "opennext preview",
+    "deploy": "opennext deploy"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.14.9",
     "@supabase/supabase-js": "^2.90.0",
     "countries-and-timezones": "^3.8.0",
     "countries-list": "^3.2.2",
