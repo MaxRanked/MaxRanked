@@ -258,7 +258,7 @@ export default function HomePage() {
                   setTimeout(() => {
                     setShowAddForm(false);
                     setSearchTerm("");
-                  }, 4000); // ← 2.8 seconds delay - feel free to adjust (2000 = 2s, 3500 = 3.5s)
+                  }, 3500); // ← 2.8 seconds delay - feel free to adjust (2000 = 2s, 3500 = 3.5s)
                 }}
                 onCancel={() => setShowAddForm(false)}
               />
