@@ -1,5 +1,5 @@
 // open-next.config.ts
-// Exact structure required by @opennextjs/cloudflare (v1.14.9) validation
+// Exact minimal config matching the adapter's validation template
 
 export default {
   default: {
@@ -12,6 +12,7 @@ export default {
       queue: "dummy",
     },
   },
+  edgeExternals: ["node:crypto"], // Optional but included to match full example
   middleware: {
     external: true,
     override: {
@@ -23,6 +24,4 @@ export default {
       queue: "dummy",
     },
   },
-  // Optional: Uncomment if you need node:crypto in edge contexts
-  // edgeExternals: ["node:crypto"],
 };
