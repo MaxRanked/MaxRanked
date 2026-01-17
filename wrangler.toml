@@ -1,0 +1,13 @@
+# wrangler.toml - Required for @opennextjs/cloudflare on Cloudflare Pages/Workers
+
+name = "maxranked"  # Change to your project name (lowercase, no spaces)
+compatibility_date = "2025-01-01"  # Or later; enables modern Node.js features
+compatibility_flags = [ "nodejs_compat" ]  # Critical for Node.js APIs
+
+main = ".open-next/worker.js"  # Default output from OpenNext build
+assets = { directory = ".open-next/assets", binding = "ASSETS" }  # For static files
+
+# Optional but good: If you add caching later, bind an R2 bucket here
+# [[r2_buckets]]
+# binding = "NEXT_INC_CACHE_R2_BUCKET"
+# bucket_name = "your-cache-bucket"
