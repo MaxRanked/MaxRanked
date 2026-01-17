@@ -40,10 +40,14 @@ export default function HomePage() {
       }
 
       // Group assets by company_id
-      const brandsByCompany = {};
+      const brandsByCompany: Record<string, string[]> = {}; // or Record<number, string[]> if company_id is number
+
       assetData?.forEach((b) => {
-        if (!brandsByCompany[b.company_id]) brandsByCompany[b.company_id] = [];
-        brandsByCompany[b.company_id].push(b.asset_name);
+        const companyId = b.company_id; // optional: extract for clarity
+        if (!brandsByCompany[companyId]) {
+          brandsByCompany[companyId] = [];
+        }
+        brandsByCompany[companyId].push(b.asset_name);
       });
 
       // Attach brands to each company
@@ -72,14 +76,14 @@ export default function HomePage() {
 
     // First: exact matches (case-insensitive)
     const exactMatch = companies.filter(
-      (c) => c.company.toLowerCase() === trimmed
+      (c) => c.company.toLowerCase() === trimmed,
     );
 
     // Then: partial matches (excluding exact ones to avoid duplicates)
     const partialMatches = companies.filter(
       (c) =>
         c.company.toLowerCase().includes(trimmed) &&
-        c.company.toLowerCase() !== trimmed
+        c.company.toLowerCase() !== trimmed,
     );
 
     // Combine: exact first, then partials
