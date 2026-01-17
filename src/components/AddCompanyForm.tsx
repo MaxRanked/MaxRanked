@@ -9,6 +9,7 @@ type Props = {
   searchTerm: string;
   companies: any[];
   onSuccess: () => void;
+  onCancel: () => void;
 };
 
 export default function AddCompanyForm({
