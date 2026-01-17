@@ -210,7 +210,7 @@ export default function HomePage() {
                       </h4>
                       {company.brands.length > 0 ? (
                         <ul className="space-y-1 text-sm text-gray-600">
-                          {company.brands.map((brand: string, idx) => (
+                          {company.brands.map((brand: string, idx: number) => (
                             <li
                               key={idx}
                               className="hover:text-blue-600 transition"
