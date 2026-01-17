@@ -1,17 +1,17 @@
 // open-next.config.ts
-// Minimal config for Next.js on Cloudflare using @opennextjs/cloudflare (2026 compatible)
+// This uses the defineCloudflareConfig helper from the adapter (required for validation)
 
-import type { OpenNextConfig } from "@opennextjs/cloudflare";
+import { defineCloudflareConfig } from "@opennextjs/cloudflare";
 
-const config: OpenNextConfig = {
+export default defineCloudflareConfig({
   default: {
     override: {
-      wrapper: "cloudflare-node", // Required: Node.js compat wrapper
-      converter: "edge", // Required: Handles request/response conversion
-      proxyExternalRequest: "fetch", // Required: Use fetch for external calls (e.g., Supabase)
-      incrementalCache: "dummy", // Disable caching (safe for your simple form app)
+      wrapper: "cloudflare-node", // Node.js compat for server functions
+      converter: "edge", // Required for request/response handling
+      proxyExternalRequest: "fetch", // For external calls like Supabase
+      incrementalCache: "dummy", // Disable caching (safe for your app)
       tagCache: "dummy",
-      queue: "dummy", // Or "direct" if you need queueing later
+      queue: "dummy",
     },
   },
   middleware: {
@@ -25,8 +25,4 @@ const config: OpenNextConfig = {
       queue: "dummy",
     },
   },
-  // Optional: Add if you use crypto or other node modules in edge contexts
-  // edgeExternals: ["node:crypto"],
-};
-
-export default config;
+});
