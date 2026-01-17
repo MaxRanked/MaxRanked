@@ -1,7 +1,7 @@
 # wrangler.toml - Required for @opennextjs/cloudflare on Cloudflare Pages/Workers
 
 name = "maxranked"  # Change to your project name (lowercase, no spaces)
-compatibility_date = "2025-01-01"  # Or later; enables modern Node.js features
+compatibility_date = "2025-05-05"  # Or later; enables modern Node.js features
 compatibility_flags = [ "nodejs_compat" ]  # Critical for Node.js APIs
 
 main = ".open-next/worker.js"  # Default output from OpenNext build
