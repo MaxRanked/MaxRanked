@@ -1,10 +1,28 @@
 // open-next.config.ts
-// Minimal config to satisfy @opennextjs/cloudflare validation (2026)
+// This matches the exact structure required by @opennextjs/cloudflare v1.14.9
 
 export default {
-  default: {}, // Required: At least empty object here to pass check
-  // Optional defaults (dummy to disable advanced features your app doesn't need)
-  incrementalCache: "dummy",
-  tagCache: "dummy",
-  queue: "dummy",
+  default: {
+    override: {
+      wrapper: "cloudflare-node",
+      converter: "edge",
+      proxyExternalRequest: "fetch",
+      incrementalCache: "dummy",
+      tagCache: "dummy",
+      queue: "dummy",
+    },
+  },
+  middleware: {
+    external: true,
+    override: {
+      wrapper: "cloudflare-edge",
+      converter: "edge",
+      proxyExternalRequest: "fetch",
+      incrementalCache: "dummy",
+      tagCache: "dummy",
+      queue: "dummy",
+    },
+  },
+  // Optional: Add if you need node:crypto or other externals
+  // edgeExternals: ["node:crypto"],
 };
