@@ -11,6 +11,7 @@ type Props = {
   onSuccess?: () => void;
   onCancel?: () => void;
   forceAssetMode?: boolean;
+  assetOwnerPreselect?: string;
   onNameChange?: (newName: string) => void; // ← new prop for sync
 };
 
