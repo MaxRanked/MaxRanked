@@ -1,22 +1,38 @@
 "use client";
 
 import { supabase } from "@/lib/supabaseClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { countries } from "countries-list";
 import { Country, State } from "country-state-city";
 
 type Props = {
   searchTerm: string;
   companies: any[];
-  onSuccess: () => void;
-  onCancel: () => void;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+  forceAssetMode?: boolean;
+  onNameChange?: (newName: string) => void; // ← new prop for sync
 };
 
 export default function AddCompanyForm({
   searchTerm,
   companies,
   onSuccess,
+  onCancel,
+  forceAssetMode = false,
+  onNameChange,
 }: Props) {
+  const [name, setName] = useState(searchTerm);
+
+  useEffect(() => {
+    setName(searchTerm); // Sync from parent to form
+  }, []);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setName(newName);
+    onNameChange?.(newName); // Sync back to parent (searchTerm)
+  };
   const [isAsset, setIsAsset] = useState(false);
   const [country, setCountry] = useState("");
   const [region, setRegion] = useState("");
@@ -29,6 +45,14 @@ export default function AddCompanyForm({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [countrySuggestions, setCountrySuggestions] = useState<string[]>([]);
   const [regionSuggestions, setRegionSuggestions] = useState<string[]>([]);
+  const [formName, setFormName] = useState(searchTerm);
+  const isAssetMode = forceAssetMode ?? isAsset;
+
+  useEffect(() => {
+    if (forceAssetMode) {
+      setIsAsset(true); // force checked
+    }
+  }, [forceAssetMode]);
 
   const handleParentChange = (value: string) => {
     setParent(value);
@@ -62,12 +86,22 @@ export default function AddCompanyForm({
         autoReason = `Missing ${missing.join(" and ")}`;
       }
     }
+    {
+      !isAssetMode && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* country input */}
+          <div>{/* ... */}</div>
+          {/* region input */}
+          <div>{/* ... */}</div>
+        </div>
+      );
+    }
 
-    if (isAsset) {
+    if (isAssetMode) {
       // Submit to pending_assets
       const { error } = await supabase.from("pending_assets").insert({
-        company_name: parent.trim() || null, // Owning company name
-        asset_name: searchTerm.trim(),
+        company_name: parent.trim() || null,
+        asset_name: formName.trim(), // ← use the editable name
       });
 
       if (error) {
@@ -75,15 +109,16 @@ export default function AddCompanyForm({
         setMessage("Sorry, something went wrong. Try again?");
       } else {
         setMessage(
-          `Thanks! "${searchTerm}" has been submitted as a brand/asset for review.`,
+          `Thanks! "${name.trim()}" has been submitted as an asset for review.`,
         );
+        setName(""); // clear after success
         setParent("");
         if (onSuccess) onSuccess();
       }
     } else {
       // Submit to pending_companies
       const { error } = await supabase.from("pending_companies").insert({
-        company_name: searchTerm.trim(),
+        company_name: formName.trim(), // ← also use editable name here
         country: country.trim() || null,
         region: region.trim() || null,
         parent_company_name: parent.trim() || null,
@@ -94,7 +129,10 @@ export default function AddCompanyForm({
         console.error("Error adding company:", error);
         setMessage("Sorry, something went wrong. Try again?");
       } else {
-        setMessage(`Thanks! "${searchTerm}" has been submitted for review.`);
+        setMessage(
+          `Thanks! "${formName.trim()}" has been submitted as an ${isAssetMode ? "asset" : "company"} for review.`,
+        );
+        setName(""); // clear
         setCountry("");
         setRegion("");
         setParent("");
@@ -197,6 +235,11 @@ export default function AddCompanyForm({
           <p className="text-2xl font-semibold">{message}</p>
         </div>
       )}
+      <h3 className="text-2xl font-bold mb-6 text-center text-white">
+        {isAssetMode
+          ? `Add Asset: ${formName.trim() || searchTerm.trim() || "New Asset"}`
+          : `Add: ${searchTerm.trim() || "New Company"}`}
+      </h3>
 
       <form
         onSubmit={handleSubmit}
@@ -205,30 +248,35 @@ export default function AddCompanyForm({
         {/* Name */}
         <div>
           <label className="block text-lg font-medium text-gray-700 mb-2">
-            {isAsset ? "Brand/Asset Name" : "Company Name"}
+            Name
           </label>
           <input
             type="text"
-            value={searchTerm}
-            disabled
-            className="w-full px-4 py-3 bg-gray-200 rounded-lg text-lg font-semibold text-gray-900 border border-gray-400"
+            value={formName}
+            onChange={(e) => setFormName(e.target.value)}
+            placeholder={isAssetMode ? "Asset" : "Input Name"}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-semibold text-gray-900 focus:outline-none focus:border-blue-500"
+            required
+            autoFocus
           />
         </div>
 
         {/* Checkbox */}
-        <div className="mt-4">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isAsset}
-              onChange={(e) => setIsAsset(e.target.checked)}
-              className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-            />
-            <span className="text-lg font-medium text-gray-700">
-              This is a brand or asset of an existing company
-            </span>
-          </label>
-        </div>
+        {!forceAssetMode && (
+          <div className="mt-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isAsset}
+                onChange={(e) => setIsAsset(e.target.checked)}
+                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <span className="text-lg font-medium text-gray-700">
+                This is an asset of an existing company
+              </span>
+            </label>
+          </div>
+        )}
 
         {/* Country & Region - hidden when isAsset */}
         {!isAsset && (
@@ -322,8 +370,8 @@ export default function AddCompanyForm({
         {/* Parent / Owning Company - with auto-suggest */}
         <div className="relative">
           <label className="block text-lg font-medium text-gray-700 mb-2">
-            {isAsset ? "Owning Company" : "Parent Company"}{" "}
-            <span className={isAsset ? "text-red-600" : "text-gray-500"}>
+            {isAssetMode ? "Owning Company" : "Parent Company"}{" "}
+            <span className={isAssetMode ? "text-red-600" : "text-gray-500"}>
               *
             </span>
           </label>
@@ -334,11 +382,11 @@ export default function AddCompanyForm({
             onFocus={() => parent && handleParentChange(parent)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder={isAsset ? "Owner" : "Parent"}
-            required={isAsset}
+            required={isAssetMode}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-semibold text-gray-900 focus:outline-none focus:border-blue-500"
           />
           <p className="text-sm text-gray-500 mt-1">
-            {isAsset
+            {isAssetMode
               ? "Start typing to see matching companies (required)"
               : "(optional) If this company has a parent/owner"}
           </p>
@@ -371,9 +419,9 @@ export default function AddCompanyForm({
           >
             {loading
               ? "Submitting..."
-              : isAsset
-                ? "Submit Brand/Asset for Review"
-                : "Submit Company for Review"}
+              : isAssetMode
+                ? "Submit for Review"
+                : "Submit for Review"}
           </button>
         </div>
       </form>

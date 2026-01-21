@@ -8,15 +8,15 @@ export default function AboutPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-16">
-      <h1 className="text-5xl md:text-5xl font-bold text-center mb-8 text-white">
+      <h1 className="text-5xl md:text-5xl font-bold text-center mb-8 text-red-900 dark:text-white">
         About MaxRanked
       </h1>
 
-      <div className="prose prose-invert max-w-none text-gray-300 space-y-6">
+      <div className="prose prose-invert max-w-none text-gray-900 dark:text-gray-100 space-y-6">
         <p className="text-2xl text-center">
           MaxRanked is meant to give people a place to rank companies and find
           hierarchical associations (who owns what). A good company will welcome
-          being ranked by the public. Too often complaints fall on deaf ears and
+          being ranked by the public. To often, complaints fall on deaf ears and
           high praise falls silent among crowds. Use this service to help the
           world see what companies are truly loved, and those, that are not.
         </p>
@@ -26,7 +26,7 @@ export default function AboutPage() {
           independent. This means no ads or selling of data.
         </p>
         <p className="text-2xl text-center">
-          Vote up or down. Add missing companies, brands and assets. Map
+          Vote up or down. Add missing companies and assets. Map
           parent/subsidiary relationships. The data grows as users fill it. No
           corporate influences, just a shared view of who owns what and how the
           world ranks it.
@@ -62,7 +62,7 @@ export default function AboutPage() {
         {/* Privacy Button */}
         <button
           onClick={() => setPrivacyOpen(true)}
-          className="px-10 py-4 bg-blue-500/30 text-blue-200 font-medium rounded-xl hover:bg-blue-500/50 transition border border-blue-400/50 backdrop-blur-sm text-xl"
+          className="px-10 py-4 bg-blue-500/30 text-back-200 font-medium rounded-xl hover:bg-blue-500/50 transition border border-blue-400/50 backdrop-blur-sm text-xl"
         >
           Privacy
         </button>

@@ -69,6 +69,7 @@ export default function HomePage() {
   useEffect(() => {
     if (searchTerm.trim() === "") {
       setFilteredCompanies([]);
+      setShowAddForm(false); // Hide form when search is emptied
       return;
     }
 
@@ -93,6 +94,21 @@ export default function HomePage() {
   const noResults = searchTerm.trim() !== "" && filteredCompanies.length === 0;
   const hasResults = filteredCompanies.length > 0;
 
+  function getVotePercentage(up: number, down: number): string {
+    const total = up + down;
+
+    // No votes yet → show neutral 0%
+    if (total === 0) {
+      return "0%";
+    }
+
+    // Percentage of upvotes (always 0–100)
+    const percentage = (up / total) * 100;
+
+    // Round to nearest whole number
+    return `${Math.round(percentage)}%`;
+  }
+
   return (
     <main className="max-w-7xl mx-auto px-4 py-12">
       {/* Title */}
@@ -103,14 +119,14 @@ export default function HomePage() {
         {/* Left: About button */}
         <Link
           href="/about"
-          className="text-blue-400 hover:text-blue-300 font-medium text-lg transition px-6 py-2 bg-gray-800/50 rounded-lg border border-gray-700 hover:bg-gray-700/50"
+          className="text-yellow-400 hover:text-yellow-300 font-medium text-lg transition px-6 py-2 bg-gray-800/50 rounded-lg border border-gray-700 hover:bg-gray-700/50"
         >
           About
         </Link>
 
         {/* Center: Prompt text (the "box") */}
         <p className="text-xl md:text-2xl text-center text-gray-400 flex-1 max-w-md">
-          Where the public ranks companies.
+          Where people rank companies.
         </p>
 
         {/* Right: Support button */}
@@ -138,8 +154,15 @@ export default function HomePage() {
               }
             }
           }}
-          placeholder="Search for any company..."
-          className="w-full px-8 py-5 text-xl rounded-2xl border-2 border-gray-300 focus:outline-none focus:border-blue-500 shadow-lg transition pr-32"
+          placeholder="Search..."
+          className="
+    w-full px-8 py-5 text-xl rounded-2xl
+    border-2 border-blue-500
+    focus:border-blue-500
+    focus:outline-none
+    bg-grey
+    shadow-lg transition pr-32
+  "
           autoFocus
         />
 
@@ -157,13 +180,13 @@ export default function HomePage() {
       {loading ? (
         // Initial load: just a simple loading message (no cards at all)
         <div className="text-center mt-16">
-          <p className="text-2xl text-gray-500 animate-pulse">
+          <p className="text-2xl text-gray-800 dark:text-gray-300 animate-pulse">
             Loading companies...
           </p>
         </div>
       ) : searchTerm.trim() === "" ? (
         // No search yet: prompt (still no cards)
-        <p className="text-center text-2xl text-gray-500 mt-12 mb-12">
+        <p className="text-center text-2xl text-gray-800 dark:text-gray-300 mt-12 mb-12">
           Type a company name above to get started
         </p>
       ) : (
@@ -171,7 +194,7 @@ export default function HomePage() {
         <>
           {hasResults ? (
             <div className="mt-16">
-              <h2 className="text-4xl font-bold text-center mb-12 text-gray-300">
+              <h2 className="text-4xl font-bold text-center mb-12 text-gray-800 dark:text-gray-300">
                 Results for "{searchTerm}"
               </h2>
 
@@ -180,7 +203,7 @@ export default function HomePage() {
                   <Link
                     key={company.id}
                     href={`/company/${company.id}`}
-                    className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-transform hover:-translate-y-2 cursor-pointer w-full max-w-md no-underline flex flex-row items-start gap-6"
+                    className="bg-gray-100 dark:bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-transform hover:-translate-y-2 cursor-pointer w-full max-w-md no-underline flex flex-row items-start gap-6"
                   >
                     {/* Left: Main company info & votes */}
                     <div className="flex-1">
@@ -197,8 +220,12 @@ export default function HomePage() {
                         <span className="text-red-600 font-bold">
                           ↓ {company.vote_down}
                         </span>
-                        <span className="text-gray-800 font-semibold">
-                          Net: {company.vote_up - company.vote_down}
+                        <span className="text-yellow-600 font-semibold">
+                          Rank:{" "}
+                          {getVotePercentage(
+                            company.vote_up,
+                            company.vote_down,
+                          )}
                         </span>
                       </div>
                     </div>
@@ -206,7 +233,7 @@ export default function HomePage() {
                     {/* Right: Brands & Assets */}
                     <div className="w-1/3 min-w-[140px] border-l border-gray-200 pl-4">
                       <h4 className="text-base font-semibold text-gray-800 mb-2">
-                        Brands & Assets
+                        Assets
                       </h4>
                       {company.brands.length > 0 ? (
                         <ul className="space-y-1 text-sm text-gray-600">
@@ -232,10 +259,10 @@ export default function HomePage() {
           ) : (
             <div className="mt-8">
               <div className="text-center mb-6">
-                <p className="text-3xl font-semibold text-gray-800">
+                <p className="text-3xl font-semibold text-gray-800 dark:text-gray-300">
                   No company found for "{searchTerm}"
                 </p>
-                <p className="text-xl text-gray-600 mt-2">
+                <p className="text-xl text-gray-800 dark:text-gray-300 mt-2">
                   Be the first to add it to MaxRanked!
                 </p>
               </div>
@@ -246,21 +273,17 @@ export default function HomePage() {
           {/* The form now only shows when user clicks the button or presses Enter */}
           {showAddForm && (
             <div className="mt-12 max-w-2xl mx-auto p-6 bg-gray-900/40 rounded-xl border border-gray-700">
-              <h3 className="text-2xl font-bold mb-6 text-center text-white">
-                Add company: {searchTerm.trim()}
-              </h3>
-
               <AddCompanyForm
                 searchTerm={searchTerm}
                 companies={companies}
-                // Recommended callbacks (add these props to your AddCompanyForm if needed)
                 onSuccess={() => {
                   setTimeout(() => {
                     setShowAddForm(false);
-                    setSearchTerm("");
-                  }, 3500); // ← 2.8 seconds delay - feel free to adjust (2000 = 2s, 3500 = 3.5s)
+                    setSearchTerm(""); // clear search after success
+                  }, 3500);
                 }}
                 onCancel={() => setShowAddForm(false)}
+                // Remove onNameChange prop if you added it
               />
             </div>
           )}

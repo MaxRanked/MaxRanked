@@ -4,6 +4,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import AddCompanyForm from "@/components/AddCompanyForm";
+import AddParentForm from "@/components/AddParentForm";
 
 export default function CompanyDetail() {
   const { id } = useParams();
@@ -29,6 +31,44 @@ export default function CompanyDetail() {
   const [rightOpen, setRightOpen] = useState(false);
   const companyId = Number(id);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showAddAsset, setShowAddAsset] = useState(false);
+  const [allCompanies, setAllCompanies] = useState<any[]>([]);
+  const [showAddParentForm, setShowAddParentForm] = useState(false);
+
+  function getIndividualPercent(
+    up: number | null,
+    down: number | null,
+  ): string {
+    // Coerce null/undefined to 0
+    const upvotes = Number(up ?? 0);
+    const downvotes = Number(down ?? 0);
+
+    const total = upvotes + downvotes;
+
+    if (total === 0) {
+      return "0%";
+    }
+
+    const percent = (upvotes / total) * 100;
+    return `${Math.round(percent)}%`;
+  }
+
+  useEffect(() => {
+    async function fetchAllCompanies() {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, company") // only need id and name for suggestions
+        .order("company", { ascending: true });
+
+      if (!error && data) {
+        setAllCompanies(data);
+      } else {
+        console.error("Failed to fetch companies for suggestions:", error);
+      }
+    }
+
+    fetchAllCompanies();
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -62,7 +102,7 @@ export default function CompanyDetail() {
         } else {
           setAssets(assetsData || []);
           console.log(
-            `Loaded ${assetsData?.length || 0} assets for company ${companyId}`
+            `Loaded ${assetsData?.length || 0} assets for company ${companyId}`,
           );
         }
 
@@ -135,7 +175,7 @@ export default function CompanyDetail() {
           child_id,
           parent:parent_id (company),
           child:child_id (company)
-        `
+        `,
           )
           .or(`parent_id.eq.${id},child_id.eq.${id}`);
 
@@ -276,8 +316,7 @@ export default function CompanyDetail() {
             <h3 className="text-3xl font-bold text-white mb-6">
               <span className="text-yellow-400">Ranks</span>,{" "}
               <span className="text-green-400">Vot</span>
-              <span className="text-red-400">es</span>, Brands & Assets
-              Explained
+              <span className="text-red-400">es</span> and Assets Explained
             </h3>
 
             <div className="text-gray-300 text-base space-y-4 text-center">
@@ -292,9 +331,9 @@ export default function CompanyDetail() {
               </p>
 
               <p>
-                Brands & Assets is a list of known assets owned by the displayed
-                company. Alot of commonly used things are not standalone
-                companies but rather, brands or assets owned by the company.
+                Assets is a list of known assets owned by the displayed company.
+                Alot of commonly used things are not standalone companies but
+                rather, assets owned by the company.
               </p>
 
               <p>
@@ -346,7 +385,6 @@ export default function CompanyDetail() {
             </div>
 
             {/* Vote Buttons */}
-            {/* Vote Buttons */}
             <div>
               <h3 className="text-3xl md:text-4xl font-bold text-gray-300 mb-8">
                 Have your say!
@@ -396,15 +434,36 @@ export default function CompanyDetail() {
           </div>
 
           {/* Right box: Brands & Assets */}
-          <div className="w-96 min-w-[360px] bg-gray-800/60 rounded-2xl p-7 border border-gray-700 text-center self-start mt-8">
-            <h3 className="text-3xl font-bold text-white mb-6">
-              Brands & Assets
-            </h3>
+          <div className="w-96 min-w-[360px] bg-gray-800/60 rounded-2xl p-7 border border-gray-700 self-start mt-8">
+            <div className="flex items-center justify-center gap-4 mb-5">
+              <h3 className="text-3xl font-bold text-white">Assets</h3>
+              <button
+                onClick={() => setShowAddAsset(!showAddAsset)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-lg font-medium transition flex items-center gap-2 shadow-md"
+                aria-label="Add new asset"
+              >
+                + ADD
+              </button>
+            </div>
+
+            {showAddAsset && (
+              <div className="mt-6 p-5 bg-gray-900/70 rounded-xl border border-gray-700">
+                <AddCompanyForm
+                  searchTerm=""
+                  companies={allCompanies}
+                  onSuccess={() => {
+                    setShowAddAsset(false);
+                    window.location.reload();
+                  }}
+                  onCancel={() => setShowAddAsset(false)}
+                  forceAssetMode={true}
+                  assetOwnerPreselect={company?.company}
+                />
+              </div>
+            )}
 
             {assets.length === 0 ? (
-              <p className="text-gray-400 py-8 italic">
-                No brands or assets listed yet
-              </p>
+              <p className="text-gray-400 py-8 italic">No assets listed yet</p>
             ) : (
               <ul className="space-y-4">
                 {assets.map((asset, index) => (
@@ -437,7 +496,7 @@ export default function CompanyDetail() {
           <button
             onClick={() => setRightOpen(!rightOpen)}
             className="pointer-events-auto fixed right-4 top-1/2 -translate-y-1/2 z-50 bg-gray-800/90 text-white p-5 rounded-full shadow-2xl hover:bg-gray-700 transition text-3xl"
-            aria-label="Toggle brands & assets"
+            aria-label="Toggle assets"
           >
             →
           </button>
@@ -475,10 +534,9 @@ export default function CompanyDetail() {
                 </p>
 
                 <p>
-                  Brands & Assets is a list of known assets owned by the
-                  displayed company. Alot of commonly used things are not
-                  standalone companies but rather, brands or assets owned by the
-                  company.
+                  Assets is a list of known assets owned by the displayed
+                  company. Alot of commonly used things are not standalone
+                  companies but rather, assets owned by the company.
                 </p>
 
                 <p>
@@ -499,8 +557,9 @@ export default function CompanyDetail() {
           } pointer-events-auto`}
         >
           <div className="p-6">
+            {/* Close button row */}
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-white">Brands & Assets</h3>
+              <h3 className="text-2xl font-bold text-white">Assets</h3>
               <button
                 onClick={() => setRightOpen(false)}
                 className="text-gray-400 hover:text-white text-3xl"
@@ -508,16 +567,46 @@ export default function CompanyDetail() {
                 ×
               </button>
             </div>
-            {/* Your full right box content (same as desktop) */}
+
+            {/* Centered title + ADD button */}
+            <div className="flex items-center justify-center gap-4 mb-5">
+              <h3 className="text-2xl font-bold text-white">Assets</h3>
+              <button
+                onClick={() => setShowAddAsset(!showAddAsset)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-base font-medium transition flex items-center gap-2 shadow-md"
+                aria-label="Add new asset"
+              >
+                + ADD
+              </button>
+            </div>
+
+            {/* Inline add form (if toggled) */}
+            {showAddAsset && (
+              <div className="mt-6 p-5 bg-gray-900/70 rounded-xl border border-gray-700">
+                <AddCompanyForm
+                  searchTerm=""
+                  companies={allCompanies}
+                  onSuccess={() => {
+                    setShowAddAsset(false);
+                    window.location.reload();
+                  }}
+                  onCancel={() => setShowAddAsset(false)}
+                  forceAssetMode={true}
+                  assetOwnerPreselect={company?.company}
+                />
+              </div>
+            )}
+
+            {/* Assets list */}
             {assets.length === 0 ? (
-              <p className="text-gray-400 py-8 italic">
-                No brands or assets listed yet
+              <p className="text-gray-400 py-8 italic text-center">
+                No assets listed yet
               </p>
             ) : (
               <ul className="space-y-4">
                 {assets.map((asset, index) => (
                   <li key={index} className="bg-gray-900/50 p-5 rounded-xl">
-                    <div className="font-semibold text-gray-100">
+                    <div className="font-semibold text-gray-100 text-center">
                       {asset.asset_name}
                     </div>
                   </li>
@@ -547,14 +636,47 @@ export default function CompanyDetail() {
 
         {/* Parents */}
         <div className="mb-12">
-          <h3 className="text-3xl font-semibold text-center mb-8 text-gray-300">
-            Parent
-          </h3>
           {hierarchy.filter((h) => h.child_id === parseInt(id as string))
             .length === 0 ? (
-            <p className="text-center text-xl text-gray-500">
-              No parents found
-            </p>
+            <div className="mb-12">
+              <h3 className="text-3xl font-semibold text-center mb-8 text-gray-300">
+                Parent
+              </h3>
+
+              {hierarchy.filter((h) => h.child_id === parseInt(id as string))
+                .length === 0 ? (
+                <div className="text-center">
+                  <p className="text-xl text-gray-500 mb-4">No parents found</p>
+                  <button
+                    onClick={() => setShowAddParentForm(true)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition shadow-md"
+                  >
+                    + Add Parent
+                  </button>
+                </div>
+              ) : (
+                <ul className="space-y-6 max-w-2xl mx-auto">
+                  {/* existing parent list */}
+                </ul>
+              )}
+
+              {showAddParentForm && (
+                <div className="mt-8 p-6 bg-gray-900/70 rounded-xl border border-gray-700 max-w-xl mx-auto">
+                  <h4 className="text-xl font-bold text-white mb-4 text-center">
+                    Add Parent Company
+                  </h4>
+                  <AddParentForm
+                    childId={companyId}
+                    companies={allCompanies} // ← from earlier fetch or pass your list
+                    onSuccess={() => {
+                      setShowAddParentForm(false);
+                      window.location.reload(); // or better: refetch hierarchy
+                    }}
+                    onCancel={() => setShowAddParentForm(false)}
+                  />
+                </div>
+              )}
+            </div>
           ) : (
             <ul className="space-y-6 max-w-2xl mx-auto">
               {hierarchy
@@ -571,8 +693,10 @@ export default function CompanyDetail() {
                       {h.parent.company}
                     </Link>
                     <span className="text-yellow-400 text-xl">
-                      {totalPercent}%{" "}
-                      {/* Placeholder; replace with per-company % if you add that later */}
+                      {getIndividualPercent(
+                        h.parent.vote_up,
+                        h.parent.vote_down,
+                      )}
                     </span>
                   </li>
                 ))}
@@ -606,7 +730,7 @@ export default function CompanyDetail() {
                       {h.child.company}
                     </Link>
                     <span className="text-yellow-400 text-xl">
-                      {totalPercent}% {/* Placeholder */}
+                      {getIndividualPercent(h.child.vote_up, h.child.vote_down)}
                     </span>
                   </li>
                 ))}
