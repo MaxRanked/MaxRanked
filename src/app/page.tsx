@@ -75,20 +75,37 @@ export default function HomePage() {
 
     const trimmed = searchTerm.trim().toLowerCase();
 
-    // First: exact matches (case-insensitive)
-    const exactMatch = companies.filter(
-      (c) => c.company.toLowerCase() === trimmed,
-    );
+    // Find companies where:
+    // 1. Company name matches exactly
+    // 2. Company name contains the term
+    // 3. Any asset name contains the term → return the owning company
+    const matches = companies.filter((c) => {
+      const companyLower = c.company.toLowerCase();
 
-    // Then: partial matches (excluding exact ones to avoid duplicates)
-    const partialMatches = companies.filter(
-      (c) =>
-        c.company.toLowerCase().includes(trimmed) &&
-        c.company.toLowerCase() !== trimmed,
-    );
+      // Direct company name match
+      if (companyLower === trimmed || companyLower.includes(trimmed)) {
+        return true;
+      }
 
-    // Combine: exact first, then partials
-    setFilteredCompanies([...exactMatch, ...partialMatches]);
+      // Asset name match → include if any asset contains the term
+      return c.brands?.some((asset: string) =>
+        asset.toLowerCase().includes(trimmed),
+      );
+    });
+
+    // Optional: sort so exact company matches come first, then partial, then asset matches
+    const sorted = [...matches].sort((a, b) => {
+      const aCompany = a.company.toLowerCase();
+      const bCompany = b.company.toLowerCase();
+
+      if (aCompany === trimmed) return -1;
+      if (bCompany === trimmed) return 1;
+      if (aCompany.includes(trimmed) && !bCompany.includes(trimmed)) return -1;
+      if (!aCompany.includes(trimmed) && bCompany.includes(trimmed)) return 1;
+      return 0;
+    });
+
+    setFilteredCompanies(sorted);
   }, [searchTerm, companies]);
 
   const noResults = searchTerm.trim() !== "" && filteredCompanies.length === 0;

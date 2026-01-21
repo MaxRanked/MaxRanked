@@ -22,10 +22,6 @@ export default function AboutPage() {
         </p>
 
         <p className="text-2xl text-center">
-          This service is controlled by the general public and will remain fully
-          independent. This means no ads or selling of data.
-        </p>
-        <p className="text-2xl text-center">
           Vote up or down. Add missing companies and assets. Map
           parent/subsidiary relationships. The data grows as users fill it. No
           corporate influences, just a shared view of who owns what and how the
