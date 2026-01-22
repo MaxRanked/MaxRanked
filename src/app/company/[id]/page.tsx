@@ -201,8 +201,10 @@ export default function CompanyDetail() {
       return;
     }
 
-    // Disable buttons immediately (optimistic)
-    setHasVoted(true);
+    // Clear previous toast
+    setToastMessage(null);
+
+    // Do NOT setHasVoted(true) here — wait for backend response
 
     try {
       const { error } = await supabase.from("pending_votes").insert({
@@ -212,37 +214,30 @@ export default function CompanyDetail() {
 
       if (error) throw error;
 
-      // Success
+      // Success: now disable and show message
+      setHasVoted(true);
       setToastMessage("Vote recorded! Thank you!");
-      console.log("Success toast set - waiting 4s");
     } catch (err: any) {
-      let message = "Vote failed - please try again";
+      let message = "Vote failed – please try again";
 
       if (
         err.code === "23505" ||
         err.message?.includes("unique_violation") ||
         err.message?.includes("Already voted")
       ) {
-        message = "You've already voted for this company in the last 48 hours!";
-        // Keep buttons disabled on duplicate (good)
+        // Duplicate: disable + show already voted message
         setHasVoted(true);
+        message = "You've already voted for this company in the last 48 hours!";
       } else {
-        // Only log real unexpected errors
-        console.error("Unexpected vote error:", err);
-        // Re-enable on rare other errors (optional - you can remove setHasVoted(false) if you prefer permanent disable)
+        // Other error: keep buttons enabled
         setHasVoted(false);
       }
 
       setToastMessage(message);
-      console.log("Error toast set - waiting 4s:", message);
     }
 
-    // Shared delay: message stays 4s, then reload (works for both success & error)
-    setTimeout(() => {
-      console.log("Timer complete - clearing toast & reloading");
-      setToastMessage(null);
-      window.location.reload();
-    }, 4000);
+    // Toast clears after 4 seconds
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   async function fetchDescendants(companyId: string): Promise<string[]> {
@@ -427,7 +422,7 @@ export default function CompanyDetail() {
 
               {hasVoted && (
                 <p className="text-center text-yellow-400 mt-6 text-xl font-semibold">
-                  You've already voted – thank you!
+                  Vote sent – thank you!
                 </p>
               )}
             </div>

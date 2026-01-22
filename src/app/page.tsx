@@ -132,7 +132,7 @@ export default function HomePage() {
       <h1 className="text-5xl font-bold text-center mb-3">MaxRanked</h1>
 
       {/* Prompt text + buttons row (tighter, centered) */}
-      <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6 mb-12">
+      <div className="hidden lg:flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6 mb-12">
         {/* Left: About button */}
         <Link
           href="/about"
@@ -215,29 +215,37 @@ export default function HomePage() {
                 Results for "{searchTerm}"
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 max-w-7xl w-full mx-auto">
+              {/* Horizontal swipe on mobile, grid on desktop */}
+              <div className="overflow-x-auto snap-x snap-mandatory flex gap-6 pb-6 scrollbar-hide lg:grid lg:grid-cols-3 lg:gap-12 lg:overflow-x-visible lg:snap-none">
                 {filteredCompanies.map((company) => (
                   <Link
                     key={company.id}
                     href={`/company/${company.id}`}
-                    className="bg-gray-100 dark:bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-transform hover:-translate-y-2 cursor-pointer w-full max-w-md no-underline flex flex-row items-start gap-6"
+                    className="
+            snap-center flex-shrink-0 w-[85vw] max-w-sm lg:w-full lg:max-w-none
+            bg-white dark:bg-gray-800
+            rounded-2xl shadow-xl dark:shadow-gray-900/30
+            p-6 hover:shadow-2xl transition-transform hover:-translate-y-2
+            cursor-pointer no-underline flex flex-row items-start gap-6
+            border border-gray-200 dark:border-gray-700
+          "
                   >
                     {/* Left: Main company info & votes */}
                     <div className="flex-1">
-                      <h3 className="text-2xl font-bold mb-2 text-gray-900 text-center">
+                      <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100 text-center">
                         {company.company}
                       </h3>
-                      <p className="text-lg text-gray-600 mb-4 text-center">
+                      <p className="text-lg text-gray-600 dark:text-gray-400 mb-4 text-center">
                         {company.country || "Global"}
                       </p>
                       <div className="flex justify-center gap-6 text-xl">
-                        <span className="text-green-600 font-bold">
+                        <span className="text-green-700 dark:text-green-500 font-bold">
                           ↑ {company.vote_up}
                         </span>
-                        <span className="text-red-600 font-bold">
+                        <span className="text-red-700 dark:text-red-500 font-bold">
                           ↓ {company.vote_down}
                         </span>
-                        <span className="text-yellow-600 font-semibold">
+                        <span className="text-yellow-700 dark:text-yellow-500 font-semibold">
                           Rank:{" "}
                           {getVotePercentage(
                             company.vote_up,
@@ -248,23 +256,23 @@ export default function HomePage() {
                     </div>
 
                     {/* Right: Brands & Assets */}
-                    <div className="w-1/3 min-w-[140px] border-l border-gray-200 pl-4">
-                      <h4 className="text-base font-semibold text-gray-800 mb-2">
+                    <div className="w-1/3 min-w-[140px] border-l border-gray-200 dark:border-gray-600 pl-4 hidden lg:block">
+                      <h4 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                         Assets
                       </h4>
                       {company.brands.length > 0 ? (
-                        <ul className="space-y-1 text-sm text-gray-600">
+                        <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                           {company.brands.map((brand: string, idx: number) => (
                             <li
                               key={idx}
-                              className="hover:text-blue-600 transition"
+                              className="hover:text-blue-700 dark:hover:text-blue-400 transition"
                             >
                               {brand}
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-sm text-gray-500 italic">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 italic">
                           None listed
                         </p>
                       )}
@@ -306,6 +314,28 @@ export default function HomePage() {
           )}
         </>
       )}
+      {/* Mobile bottom navigation bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 shadow-lg">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex justify-around items-center">
+          <Link
+            href="/about"
+            className="flex flex-col items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition"
+          >
+            <span className="text-2xl mb-1">ℹ️</span>
+            About
+          </Link>
+
+          <a
+            href="https://buymeacoffee.com/maxranked"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 text-sm font-medium transition"
+          >
+            <span className="text-2xl mb-1">☕</span>
+            Support
+          </a>
+        </div>
+      </div>
     </main>
   );
 }
