@@ -23,7 +23,22 @@ export default function CompanyDetail() {
     regionalUp: number;
     regionalDown: number;
   }>({ up: 0, down: 0, regionalUp: 0, regionalDown: 0 });
-  const [hierarchy, setHierarchy] = useState<any[]>([]);
+  const [hierarchy, setHierarchy] = useState<
+    Array<{
+      parent_id: number;
+      child_id: number;
+      parent: {
+        company: string;
+        vote_up: number | null;
+        vote_down: number | null;
+      } | null;
+      child: {
+        company: string;
+        vote_up: number | null;
+        vote_down: number | null;
+      } | null;
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [voteType, setVoteType] = useState<"up" | "down" | null>(null);
   const [assets, setAssets] = useState<any[]>([]);
@@ -39,14 +54,12 @@ export default function CompanyDetail() {
     up: number | null,
     down: number | null,
   ): string {
-    // Coerce null/undefined to 0
     const upvotes = Number(up ?? 0);
     const downvotes = Number(down ?? 0);
-
     const total = upvotes + downvotes;
 
     if (total === 0) {
-      return "0%";
+      return "No votes";
     }
 
     const percent = (upvotes / total) * 100;
@@ -171,11 +184,11 @@ export default function CompanyDetail() {
           .from("company_hierarchies")
           .select(
             `
-          parent_id,
-          child_id,
-          parent:parent_id (company),
-          child:child_id (company)
-        `,
+            parent_id,
+            child_id,
+            parent:parent_id (company, vote_up, vote_down),
+            child:child_id (company, vote_up, vote_down)
+          `,
           )
           .or(`parent_id.eq.${id},child_id.eq.${id}`);
 
