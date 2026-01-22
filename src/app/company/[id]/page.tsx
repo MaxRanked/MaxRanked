@@ -290,13 +290,16 @@ export default function CompanyDetail() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-16">
-      <Link href="/" className="text-blue-500 hover:text-blue-700 mb-8 block">
-        &larr; Back to search
+      <Link
+        href="/"
+        className="text-blue-400 hover:text-blue-300 text-base sm:text-lg font-medium mb-4 sm:mb-6 md:mb-8 block"
+      >
+        ← Back to search
       </Link>
 
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Company Name & Location */}
-        <h1 className="text-5xl md:text-6xl font-bold text-center mb-3 text-white">
+        <h1 className="text-4xl xs:text-4.5xl sm:text-5xl md:text-6xl font-bold text-center mb-2 sm:mb-3 text-white">
           {company.company}
         </h1>
         <p className="text-xl md:text-2xl text-center text-gray-400 mb-12">
@@ -344,11 +347,11 @@ export default function CompanyDetail() {
           <div className="w-full max-w-3xl text-center">
             {/* Rank Totals */}
             <div className="mb-12">
-              <div className="flex justify-center items-baseline gap-6 md:gap-10 mb-6">
-                <span className="text-6xl md:text-7xl font-extrabold text-yellow-400">
+              <div className="flex justify-center items-baseline gap-6 md:gap-5 mb-6">
+                <span className="text-6xl md:text-6xl font-extrabold text-yellow-400">
                   {totalPercent}%
                 </span>
-                <span className="text-2xl md:text-3xl text-blue-400">
+                <span className="text-2xl md:text-2xl text-blue-400">
                   ({ownPercent}%)
                 </span>
               </div>
@@ -356,7 +359,7 @@ export default function CompanyDetail() {
                 Rank Score - All (self)
               </p>
 
-              <div className="flex justify-center items-baseline gap-16 md:gap-24 text-5xl md:text-6xl font-bold">
+              <div className="flex justify-center items-baseline gap-12 md:gap-10 text-5xl md:text-6xl font-bold">
                 <span className="text-green-600 group relative">
                   ↑ {totalUp}
                   <span className="absolute left-1/2 -top-14 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-sm text-gray-300 bg-black p-3 rounded whitespace-nowrap z-10">
@@ -384,7 +387,7 @@ export default function CompanyDetail() {
               <h3 className="text-3xl md:text-4xl font-bold text-gray-300 mb-8">
                 Have your say!
               </h3>
-              <div className="flex justify-center items-center gap-12 md:gap-20">
+              <div className="flex justify-center items-center gap-12 md:gap-5">
                 <button
                   onClick={() => handleVote("up")}
                   disabled={hasVoted}
@@ -476,21 +479,117 @@ export default function CompanyDetail() {
           </div>
         </div>
 
+        {/* === MOBILE LAYOUT - only visible on screens smaller than lg === */}
+        <div className="lg:hidden space-y-6 px-3 sm:px-6 pb-6 sm:pb-8">
+          {/* Rank Score Section */}
+          <div className="text-center bg-gray-900/40 rounded-2xl p-6 border border-gray-700 mt-6">
+            <div className="flex justify-center items-baseline gap-4 mb-4">
+              <span className="text-6xl sm:text-7xl font-extrabold text-yellow-400">
+                {totalPercent}%
+              </span>
+              <span className="text-2xl sm:text-3xl text-blue-400">
+                ({ownPercent}%)
+              </span>
+            </div>
+
+            <p className="text-lg sm:text-xl text-gray-400 mb-6">
+              Rank Score - All (self)
+            </p>
+
+            <div className="flex justify-center gap-12 sm:gap-16 text-5xl sm:text-6xl font-bold">
+              <span className="text-green-500 group relative">
+                ↑ {totalUp}
+                <span className="absolute left-1/2 -top-12 sm:-top-14 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-sm text-gray-300 bg-black p-3 rounded whitespace-nowrap z-10">
+                  Regional: {ownVotes.regionalUp + childVotes.regionalUp}
+                </span>
+                <div className="text-blue-400 text-2xl sm:text-3xl mt-2">
+                  ({ownVotes.up})
+                </div>
+              </span>
+
+              <span className="text-red-500 group relative">
+                ↓ {totalDown}
+                <span className="absolute left-1/2 -top-12 sm:-top-14 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-sm text-gray-300 bg-black p-3 rounded whitespace-nowrap z-10">
+                  Regional: {ownVotes.regionalDown + childVotes.regionalDown}
+                </span>
+                <div className="text-blue-400 text-2xl sm:text-3xl mt-2">
+                  ({ownVotes.down})
+                </div>
+              </span>
+            </div>
+          </div>
+
+          {/* Vote Buttons Section */}
+          <div className="text-center">
+            <h3 className="text-3xl sm:text-4xl font-bold text-gray-300 mb-8">
+              Have your say!
+            </h3>
+
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-12">
+              <button
+                onClick={() => handleVote("up")}
+                disabled={hasVoted}
+                className={`
+          w-full sm:w-auto min-w-[200px]
+          bg-green-700 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed
+          text-white px-12 py-7 rounded-2xl text-4xl sm:text-6xl font-bold
+          transition shadow-xl
+        `}
+              >
+                ↑ UP
+              </button>
+
+              <span className="text-3xl sm:text-4xl font-bold text-gray-500 hidden sm:block">
+                Vote
+              </span>
+
+              <button
+                onClick={() => handleVote("down")}
+                disabled={hasVoted}
+                className={`
+          w-full sm:w-auto min-w-[200px]
+          bg-red-700 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed
+          text-white px-12 py-7 rounded-2xl text-4xl sm:text-6xl font-bold
+          transition shadow-xl
+        `}
+              >
+                ↓ DOWN
+              </button>
+            </div>
+
+            {hasVoted && (
+              <p className="mt-8 text-yellow-400 text-xl sm:text-2xl font-semibold">
+                Vote sent – thank you!
+              </p>
+            )}
+
+            {toastMessage && (
+              <p className="mt-4 text-center text-yellow-300 text-lg">
+                {toastMessage}
+              </p>
+            )}
+          </div>
+
+          {/* === The next two sections are REMOVED here on mobile === */}
+          {/* Assets and Ranks explanation are already available via the left/right popout panels */}
+          {/* If users want them, they tap the ← or → nubs halfway down the screen */}
+        </div>
+
         {/* Mobile popout nubs & panels */}
         <div className="lg:hidden fixed inset-0 pointer-events-none">
-          {/* Left nub - halfway up, left side */}
+          {/* Left nub - moved higher (about 35-40% from top) */}
           <button
             onClick={() => setLeftOpen(!leftOpen)}
-            className="pointer-events-auto fixed left-4 top-1/2 -translate-y-1/2 z-50 bg-gray-800/90 text-white p-5 rounded-full shadow-2xl hover:bg-gray-700 transition text-3xl"
+            className="pointer-events-auto fixed left-3 sm:left-4 top-[35%] sm:top-[38%] -translate-y-1/2 z-50 bg-gray-800/90 text-white p-4 sm:p-5 rounded-full shadow-2xl hover:bg-gray-700 transition text-2xl sm:text-3xl"
             aria-label="Toggle how ranks are formed"
           >
             ←
           </button>
 
-          {/* Right nub - halfway up, right side */}
+          {/* Right nub - same height as left */}
           <button
             onClick={() => setRightOpen(!rightOpen)}
-            className="pointer-events-auto fixed right-4 top-1/2 -translate-y-1/2 z-50 bg-gray-800/90 text-white p-5 rounded-full shadow-2xl hover:bg-gray-700 transition text-3xl"
+            className="pointer-events-auto fixed right-3 sm:right-4 top-[35%] sm:top-[38%] -translate-y-1/2 z-50 bg-gray-800/90 text-white p-4 sm:p-5 rounded-full shadow-2xl hover:bg-gray-700 transition text-2xl sm:text-3xl"
             aria-label="Toggle assets"
           >
             →
@@ -549,65 +648,69 @@ export default function CompanyDetail() {
         <div
           className={`lg:hidden fixed inset-y-0 right-0 z-50 w-80 bg-gray-900 transform transition-transform duration-300 ease-in-out ${
             rightOpen ? "translate-x-0" : "translate-x-full"
-          } pointer-events-auto`}
+          } pointer-events-auto overflow-hidden`}
         >
-          <div className="p-6">
-            {/* Close button row */}
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-white">Assets</h3>
-              <button
-                onClick={() => setRightOpen(false)}
-                className="text-gray-400 hover:text-white text-3xl"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Centered title + ADD button */}
-            <div className="flex items-center justify-center gap-4 mb-5">
-              <h3 className="text-2xl font-bold text-white">Assets</h3>
-              <button
-                onClick={() => setShowAddAsset(!showAddAsset)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-base font-medium transition flex items-center gap-2 shadow-md"
-                aria-label="Add new asset"
-              >
-                + ADD
-              </button>
-            </div>
-
-            {/* Inline add form (if toggled) */}
-            {showAddAsset && (
-              <div className="mt-6 p-5 bg-gray-900/70 rounded-xl border border-gray-700">
-                <AddCompanyForm
-                  searchTerm=""
-                  companies={allCompanies}
-                  onSuccess={() => {
-                    setShowAddAsset(false);
-                    window.location.reload();
-                  }}
-                  onCancel={() => setShowAddAsset(false)}
-                  forceAssetMode={true}
-                  assetOwnerPreselect={company?.company}
-                />
+          {/* Key change: add overflow-y-auto + full height here */}
+          <div className="h-full overflow-y-auto overscroll-contain">
+            <div className="p-6 pb-12">
+              {" "}
+              {/* extra pb-12 gives breathing room at bottom */}
+              {/* Close button row */}
+              <div className="flex justify-between items-center mb-6 sticky top-0 bg-gray-900 z-10 py-2 -mx-6 px-6 -mt-6">
+                <h3 className="text-2xl font-bold text-white">Assets</h3>
+                <button
+                  onClick={() => setRightOpen(false)}
+                  className="text-gray-400 hover:text-white text-3xl"
+                >
+                  ×
+                </button>
               </div>
-            )}
-
-            {/* Assets list */}
-            {assets.length === 0 ? (
-              <p className="text-gray-400 py-8 italic text-center">
-                No assets listed yet
-              </p>
-            ) : (
-              <ul className="space-y-4">
-                {assets.map((asset, index) => (
-                  <li key={index} className="bg-gray-900/50 p-5 rounded-xl">
-                    <div className="font-semibold text-gray-100 text-center">
+              {/* ADD button row - make sticky too if you want */}
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <h3 className="text-2xl font-bold text-white">Assets</h3>
+                <button
+                  onClick={() => setShowAddAsset(!showAddAsset)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-base sm:text-lg font-medium transition shadow-md"
+                >
+                  + ADD
+                </button>
+              </div>
+              {/* Add form - this can now be long without breaking layout */}
+              {showAddAsset && (
+                <div className="mt-6 p-5 bg-gray-950/70 rounded-xl border border-gray-700">
+                  <AddCompanyForm
+                    searchTerm=""
+                    companies={allCompanies}
+                    onSuccess={() => {
+                      setShowAddAsset(false);
+                      window.location.reload();
+                    }}
+                    onCancel={() => setShowAddAsset(false)}
+                    forceAssetMode={true}
+                    assetOwnerPreselect={company?.company}
+                  />
+                </div>
+              )}
+              {/* Assets list - grows as needed, scrolls with parent */}
+              {assets.length === 0 ? (
+                <p className="text-gray-400 py-10 italic text-center">
+                  No assets listed yet
+                </p>
+              ) : (
+                <ul className="space-y-4 pb-6">
+                  {assets.map((asset, index) => (
+                    <li
+                      key={index}
+                      className="bg-gray-900/50 p-5 rounded-xl text-center font-semibold text-gray-100"
+                    >
                       {asset.asset_name}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {/* Optional: extra spacer at very bottom if needed */}
+              <div className="h-8" />
+            </div>
           </div>
         </div>
 
@@ -624,8 +727,8 @@ export default function CompanyDetail() {
       </div>
 
       {/* Company Hierarchy – unchanged */}
-      <div className="mt-16">
-        <h2 className="text-4xl font-bold text-center mb-12 text-white">
+      <div className="mt-8 lg:mt-16">
+        <h2 className="text-4xl font-bold text-center mb-8 lg:mb-12 text-white">
           Company Hierarchy
         </h2>
 

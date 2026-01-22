@@ -421,7 +421,7 @@ export default function AddCompanyForm({
             {loading
               ? "Submitting..."
               : isAssetMode
-                ? "Submit for Review"
+                ? "Submit"
                 : "Submit for Review"}
           </button>
         </div>
