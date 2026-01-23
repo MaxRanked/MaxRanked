@@ -23,6 +23,7 @@ export default function CompanyDetail() {
     regionalUp: number;
     regionalDown: number;
   }>({ up: 0, down: 0, regionalUp: 0, regionalDown: 0 });
+  // Change this line (near the top of the component)
   const [hierarchy, setHierarchy] = useState<
     Array<{
       parent_id: number;
@@ -192,7 +193,7 @@ export default function CompanyDetail() {
           )
           .or(`parent_id.eq.${id},child_id.eq.${id}`);
 
-        setHierarchy(hierarchyData || []);
+        setHierarchy((hierarchyData as any) || []);
       }
 
       setLoading(false);
@@ -801,12 +802,13 @@ export default function CompanyDetail() {
                       href={`/company/${h.parent_id}`}
                       className="hover:text-blue-400 transition"
                     >
-                      {h.parent.company}
+                      {h.parent?.company}{" "}
+                      {/* ← only add ?. here for null safety */}
                     </Link>
                     <span className="text-yellow-400 text-xl">
                       {getIndividualPercent(
-                        h.parent.vote_up,
-                        h.parent.vote_down,
+                        h.parent?.vote_up ?? null,
+                        h.parent?.vote_down ?? null,
                       )}
                     </span>
                   </li>
@@ -838,10 +840,13 @@ export default function CompanyDetail() {
                       href={`/company/${h.child_id}`}
                       className="hover:text-blue-400 transition"
                     >
-                      {h.child.company}
+                      {h.child?.company}
                     </Link>
                     <span className="text-yellow-400 text-xl">
-                      {getIndividualPercent(h.child.vote_up, h.child.vote_down)}
+                      {getIndividualPercent(
+                        h.child?.vote_up ?? null,
+                        h.child?.vote_down ?? null,
+                      )}
                     </span>
                   </li>
                 ))}
