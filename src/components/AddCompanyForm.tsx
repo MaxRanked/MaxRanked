@@ -119,7 +119,6 @@ export default function AddCompanyForm({
         country: finalCountry,
         region: finalRegion,
         parent_company_name: parent.trim() || null,
-        reason: autoReason, // keep this if you still want the old missing-fields reason
       });
 
       if (error) {
