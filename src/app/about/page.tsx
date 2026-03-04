@@ -16,9 +16,9 @@ export default function AboutPage() {
         <p className="text-2xl text-center">
           MaxRanked is meant to give people a place to rank companies and find
           hierarchical associations (who owns what). A good company will welcome
-          being ranked by the public. To often, complaints fall on deaf ears and
-          high praise falls silent among crowds. Use this service to help the
-          world see what companies are truly loved, and those, that are not.
+          being ranked by the public. Too often, complaints fall on deaf ears
+          and high praise falls silent among crowds. Use this service to help
+          the world see what companies are truly loved, and those, that are not.
         </p>
 
         <p className="text-2xl text-center">

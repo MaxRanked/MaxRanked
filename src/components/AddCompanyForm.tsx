@@ -78,15 +78,6 @@ export default function AddCompanyForm({
     setLoading(true);
     setMessage("");
 
-    let autoReason: string | null = null;
-    if (!isAsset) {
-      const missing: string[] = [];
-      if (!country.trim()) missing.push("country");
-      if (!region.trim()) missing.push("region");
-      if (missing.length > 0) {
-        autoReason = `Missing ${missing.join(" and ")}`;
-      }
-    }
     {
       !isAssetMode && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -118,24 +109,33 @@ export default function AddCompanyForm({
       }
     } else {
       // Submit to pending_companies
+
+      // Clean up & apply defaults only at submit time
+      const finalCountry = country.trim() || "Global";
+      const finalRegion = region.trim() || "All";
+
       const { error } = await supabase.from("pending_companies").insert({
-        company_name: formName.trim(), // ← also use editable name here
-        country: country.trim() || null,
-        region: region.trim() || null,
+        company_name: formName.trim(),
+        country: finalCountry,
+        region: finalRegion,
         parent_company_name: parent.trim() || null,
-        reason: autoReason,
+        reason: autoReason, // keep this if you still want the old missing-fields reason
       });
 
       if (error) {
         console.error("Error adding company:", error);
         setMessage("Sorry, something went wrong. Try again?");
       } else {
+        // Optional: update the form visually to match what was saved (prevents confusion)
+        setCountry(finalCountry);
+        setRegion(finalRegion);
+
         setMessage(
-          `Thanks! "${formName.trim()}" has been submitted as an ${isAssetMode ? "asset" : "company"} for review.`,
+          `Thanks! "${formName.trim()}" has been submitted as a company for review.`,
         );
-        setName(""); // clear
-        setCountry("");
-        setRegion("");
+
+        // Clear other fields (name & parent) — but country/region now show the final values
+        setName("");
         setParent("");
         if (onSuccess) onSuccess();
       }
@@ -144,24 +144,17 @@ export default function AddCompanyForm({
     setLoading(false);
   };
   const handleCountryChange = (value: string) => {
-    const trimmedValue = value.trim();
+    setCountry(value); // ← no .trim() here — keep exactly what user typed
 
-    // If user selects/submits "Global", force region to "All"
-    if (trimmedValue.toLowerCase() === "global") {
-      setCountry("Global");
-      setRegion("All"); // ← auto-set region
-      setRegionSuggestions([]); // clear any region suggestions
-      setCountrySuggestions([]);
-      return;
-    }
-
-    setCountry(trimmedValue);
-
-    if (trimmedValue === "") {
+    if (value.trim() === "") {
+      // only use trim for "is empty" check
       setCountrySuggestions([]);
       setRegionSuggestions([]);
       return;
     }
+
+    // Use trimmed version ONLY for matching
+    const trimmedValue = value.trim();
 
     // Country suggestions
     const matches = Country.getAllCountries()
@@ -173,7 +166,6 @@ export default function AddCompanyForm({
       .map((c) => c.name)
       .slice(0, 7);
 
-    // Always include "Global" as first suggestion
     const finalSuggestions = [
       "Global",
       ...matches.filter((name) => name !== "Global"),
@@ -181,7 +173,7 @@ export default function AddCompanyForm({
 
     setCountrySuggestions(finalSuggestions);
 
-    // Load regions only for real countries
+    // Region logic (only if real country match on trimmed value)
     const selected = Country.getAllCountries().find(
       (c) =>
         c.name.toLowerCase() === trimmedValue.toLowerCase() ||
@@ -191,32 +183,58 @@ export default function AddCompanyForm({
     if (selected) {
       const states = State.getStatesOfCountry(selected.isoCode);
       const regionNames = states.map((s) => s.name);
-      const finalRegionSuggestions = ["All", ...regionNames];
-      setRegionSuggestions(finalRegionSuggestions);
+      setRegionSuggestions(["All", ...regionNames]);
     } else {
+      setRegionSuggestions([]);
+    }
+
+    // Special "Global" handling — check trimmed version
+    if (trimmedValue.toLowerCase() === "global") {
+      setRegion("All");
       setRegionSuggestions([]);
     }
   };
 
   const handleRegionChange = (value: string) => {
-    if (country.toLowerCase() === "global") {
-      setRegion("All"); // Force "All" if country is Global
-      return;
-    }
+    setRegion(value); // ← preserve exact input
 
-    setRegion(value);
+    const trimmed = value.trim();
 
-    if (value.trim() === "") {
+    if (trimmed === "") {
       setRegionSuggestions([]);
       return;
     }
 
-    // Filter existing suggestions
+    // Only filter on trimmed for suggestions
     const matches = regionSuggestions
-      .filter((r) => r.toLowerCase().includes(value.toLowerCase()))
+      .filter((r) => r.toLowerCase().includes(trimmed.toLowerCase()))
       .slice(0, 8);
 
     setRegionSuggestions(matches);
+
+    // Keep the Global → All enforcement
+    if (country.trim().toLowerCase() === "global") {
+      setRegion("All");
+    }
+  };
+
+  const handleCountryBlur = () => {
+    const trimmed = country.trim();
+    if (trimmed === "") {
+      setCountry("Global");
+      setRegion("All");
+    } else {
+      setCountry(trimmed); // remove accidental extra spaces
+    }
+  };
+
+  const handleRegionBlur = () => {
+    const trimmed = region.trim();
+    if (trimmed === "") {
+      setRegion("All");
+    } else {
+      setRegion(trimmed);
+    }
   };
 
   return (
@@ -226,7 +244,8 @@ export default function AddCompanyForm({
         <div className="mb-10 p-6 bg-green-100 border border-green-400 text-green-800 rounded-xl text-center">
           <p className="text-2xl font-semibold">{message}</p>
           <p className="text-lg mt-2">
-            It will appear after review. 2-3 minutes. Thank you!
+            It will appear after review. Aprox 15 seconds then refresh. Thank
+            you!
           </p>
         </div>
       )}
@@ -291,6 +310,7 @@ export default function AddCompanyForm({
                   type="text"
                   value={country}
                   onChange={(e) => handleCountryChange(e.target.value)}
+                  onBlur={handleCountryBlur}
                   placeholder="Country"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-semibold text-gray-900 focus:outline-none focus:border-blue-500"
                 />
@@ -342,6 +362,7 @@ export default function AddCompanyForm({
                   type="text"
                   value={region}
                   onChange={(e) => handleRegionChange(e.target.value)}
+                  onBlur={handleRegionBlur}
                   placeholder="State/Province"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-semibold text-gray-900 focus:outline-none focus:border-blue-500"
                 />
