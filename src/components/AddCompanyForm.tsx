@@ -288,7 +288,20 @@ export default function AddCompanyForm({
                 type="checkbox"
                 checked={isAsset}
                 onChange={(e) => setIsAsset(e.target.checked)}
-                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                className="
+    w-5 h-5
+    rounded
+    border border-gray-300          // light border for unchecked
+    bg-white                        // ← force unchecked to be light/white
+    text-blue-600                   // checkmark/accent color when checked
+    focus:ring-blue-500
+    focus:ring-2
+    checked:bg-blue-600             // optional: darker fill when checked
+    checked:border-blue-600
+    dark:bg-gray-700                // if in dark mode you still want light-ish unchecked
+    dark:border-gray-600
+    dark:checked:bg-blue-500
+  "
               />
               <span className="text-lg font-medium text-gray-700">
                 This is an asset of an existing company
