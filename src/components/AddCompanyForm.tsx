@@ -292,13 +292,13 @@ export default function AddCompanyForm({
     w-5 h-5
     rounded
     border border-gray-300          // light border for unchecked
-    bg-white                        // ← force unchecked to be light/white
+    bg-white                        // force unchecked to be light/white
     text-blue-600                   // checkmark/accent color when checked
     focus:ring-blue-500
     focus:ring-2
     checked:bg-blue-600             // optional: darker fill when checked
     checked:border-blue-600
-    dark:bg-gray-700                // if in dark mode you still want light-ish unchecked
+    dark:bg-white                // if in dark mode you still want light-ish unchecked
     dark:border-gray-600
     dark:checked:bg-blue-500
   "
