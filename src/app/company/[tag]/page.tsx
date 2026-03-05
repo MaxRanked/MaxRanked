@@ -3,13 +3,16 @@
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import AddCompanyForm from "@/components/AddCompanyForm";
 import AddParentForm from "@/components/AddParentForm";
 
 export default function CompanyDetail() {
-  const { id } = useParams();
+  const params = useParams();
+  const tag = params.tag as string;
+
   const [company, setCompany] = useState<any | null>(null);
+  const [companyId, setCompanyId] = useState<number | null>(null);
   const [hasVoted, setHasVoted] = useState<boolean>(false);
   const [ownVotes, setOwnVotes] = useState<{
     up: number;
@@ -23,7 +26,6 @@ export default function CompanyDetail() {
     regionalUp: number;
     regionalDown: number;
   }>({ up: 0, down: 0, regionalUp: 0, regionalDown: 0 });
-  // Change this line (near the top of the component)
   const [hierarchy, setHierarchy] = useState<
     Array<{
       parent_id: number;
@@ -45,7 +47,6 @@ export default function CompanyDetail() {
   const [assets, setAssets] = useState<any[]>([]);
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
-  const companyId = Number(id);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showAddAsset, setShowAddAsset] = useState(false);
   const [allCompanies, setAllCompanies] = useState<any[]>([]);
@@ -71,7 +72,7 @@ export default function CompanyDetail() {
     async function fetchAllCompanies() {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, company") // only need id and name for suggestions
+        .select("id, company")
         .order("company", { ascending: true });
 
       if (!error && data) {
@@ -85,150 +86,141 @@ export default function CompanyDetail() {
   }, []);
 
   useEffect(() => {
+    if (!tag) return;
+
     async function fetchData() {
-      // Fetch company basic info
-      const { data: companyData } = await supabase
+      setLoading(true);
+
+      // Fetch company by tag
+      const { data: companyData, error: companyError } = await supabase
         .from("companies")
         .select("*")
-        .eq("id", id)
+        .eq("tag", tag)
         .single();
 
-      if (companyData) {
-        setCompany(companyData);
+      if (companyError || !companyData) {
+        console.error("Company not found for tag:", tag, companyError);
+        notFound();
+      }
 
-        const companyId = Number(id);
+      const numericId = companyData.id;
+      setCompanyId(numericId);
+      setCompany(companyData);
 
-        if (isNaN(companyId)) {
-          console.error("Invalid company ID from URL:", id);
-          setLoading(false);
-          return;
-        }
+      // Fetch assets
+      const { data: assetsData, error: assetsError } = await supabase
+        .from("brands_assets")
+        .select("company_id, asset_name")
+        .eq("company_id", numericId)
+        .order("asset_name", { ascending: true });
 
-        // Fetch assets
-        const { data: assetsData, error: assetsError } = await supabase
-          .from("brands_assets")
-          .select("company_id, asset_name")
-          .in("company_id", [companyId])
-          .order("asset_name", { ascending: true });
+      if (assetsError) {
+        console.error("Assets fetch failed:", assetsError);
+      } else {
+        setAssets(assetsData || []);
+        console.log(
+          `Loaded ${assetsData?.length || 0} assets for company ${numericId}`,
+        );
+      }
 
-        if (assetsError) {
-          console.error("Assets fetch failed - full error:", assetsError);
-        } else {
-          setAssets(assetsData || []);
-          console.log(
-            `Loaded ${assetsData?.length || 0} assets for company ${companyId}`,
-          );
-        }
+      await checkVoteLockout();
 
-        // NEW: Await the lockout check HERE (inside async fetchData)
-        await checkVoteLockout();
+      // Fetch hierarchy recursively
+      const descendants = await fetchDescendants(numericId.toString());
 
-        // Fetch hierarchy recursively
-        const descendants = await fetchDescendants(id as string);
+      // Own global votes
+      const { data: ownGlobalVotes } = await supabase
+        .from("companies")
+        .select("vote_up, vote_down")
+        .eq("id", numericId)
+        .single();
 
-        // Fetch own votes
-        const { data: ownGlobalVotes } = await supabase
+      // Own regional votes
+      const { data: ownRegionalVotes } = await supabase
+        .from("company_region_votes")
+        .select("vote_up, vote_down")
+        .eq("company_id", numericId)
+        .maybeSingle();
+
+      setOwnVotes({
+        up: ownGlobalVotes?.vote_up || 0,
+        down: ownGlobalVotes?.vote_down || 0,
+        regionalUp: ownRegionalVotes?.vote_up || 0,
+        regionalDown: ownRegionalVotes?.vote_down || 0,
+      });
+
+      // Child votes
+      if (descendants.length > 0) {
+        const { data: childGlobalVotes } = await supabase
           .from("companies")
           .select("vote_up, vote_down")
-          .eq("id", id)
-          .single();
+          .in("id", descendants);
 
-        // Own regional votes
-        let ownRegionalQuery = supabase
+        const totalChildUp =
+          childGlobalVotes?.reduce((sum, v) => sum + v.vote_up, 0) || 0;
+        const totalChildDown =
+          childGlobalVotes?.reduce((sum, v) => sum + v.vote_down, 0) || 0;
+
+        const { data: childRegionalVotes } = await supabase
           .from("company_region_votes")
           .select("vote_up, vote_down")
-          .eq("company_id", companyId);
+          .in("company_id", descendants);
 
-        const { data: ownRegionalVotes } = await ownRegionalQuery.maybeSingle();
+        const totalChildRegionalUp =
+          childRegionalVotes?.reduce((sum, v) => sum + v.vote_up, 0) || 0;
+        const totalChildRegionalDown =
+          childRegionalVotes?.reduce((sum, v) => sum + v.vote_down, 0) || 0;
 
-        setOwnVotes({
-          up: ownGlobalVotes?.vote_up || 0,
-          down: ownGlobalVotes?.vote_down || 0,
-          regionalUp: ownRegionalVotes?.vote_up || 0,
-          regionalDown: ownRegionalVotes?.vote_down || 0,
+        setChildVotes({
+          up: totalChildUp,
+          down: totalChildDown,
+          regionalUp: totalChildRegionalUp,
+          regionalDown: totalChildRegionalDown,
         });
-
-        // Fetch child votes
-        if (descendants.length > 0) {
-          const { data: childGlobalVotes } = await supabase
-            .from("companies")
-            .select("vote_up, vote_down")
-            .in("id", descendants);
-
-          const totalChildUp =
-            childGlobalVotes?.reduce((sum, v) => sum + v.vote_up, 0) || 0;
-          const totalChildDown =
-            childGlobalVotes?.reduce((sum, v) => sum + v.vote_down, 0) || 0;
-
-          let childRegionalQuery = supabase
-            .from("company_region_votes")
-            .select("vote_up, vote_down")
-            .in("company_id", descendants);
-
-          const { data: childRegionalVotes } = await childRegionalQuery;
-
-          const totalChildRegionalUp =
-            childRegionalVotes?.reduce((sum, v) => sum + v.vote_up, 0) || 0;
-          const totalChildRegionalDown =
-            childRegionalVotes?.reduce((sum, v) => sum + v.vote_down, 0) || 0;
-
-          setChildVotes({
-            up: totalChildUp,
-            down: totalChildDown,
-            regionalUp: totalChildRegionalUp,
-            regionalDown: totalChildRegionalDown,
-          });
-        }
-
-        // Fetch hierarchy for display
-        const { data: hierarchyData } = await supabase
-          .from("company_hierarchies")
-          .select(
-            `
-            parent_id,
-            child_id,
-            parent:parent_id (company, vote_up, vote_down),
-            child:child_id (company, vote_up, vote_down)
-          `,
-          )
-          .or(`parent_id.eq.${id},child_id.eq.${id}`);
-
-        setHierarchy((hierarchyData as any) || []);
       }
+
+      // Fetch hierarchy for display
+      const { data: hierarchyData } = await supabase
+        .from("company_hierarchies")
+        .select(
+          `
+          parent_id,
+          child_id,
+          parent:parent_id (company, vote_up, vote_down),
+          child:child_id (company, vote_up, vote_down)
+        `,
+        )
+        .or(`parent_id.eq.${numericId},child_id.eq.${numericId}`);
+
+      setHierarchy((hierarchyData as any) || []);
 
       setLoading(false);
     }
 
     fetchData();
-  }, [id]);
+  }, [tag]);
+
   async function checkVoteLockout() {
-    // No client-side check needed anymore — backend rejects duplicates
-    setHasVoted(false); // Default to allow vote (backend will block if needed)
+    setHasVoted(false);
   }
 
-  // Call it after fetching salt
-
   const handleVote = async (type: "up" | "down") => {
-    if (!company?.id) {
-      setToastMessage("Company ID not available");
+    if (!companyId) {
+      setToastMessage("Company not loaded");
       setTimeout(() => setToastMessage(null), 4000);
       return;
     }
 
-    // Clear previous toast
     setToastMessage(null);
-
-    // Do NOT setHasVoted(true) here — wait for backend response
 
     try {
       const { error } = await supabase.from("pending_votes").insert({
-        company_id: company.id,
+        company_id: companyId,
         vote_type: type,
       });
 
       if (error) throw error;
 
-      // Success: now disable and show message
       setHasVoted(true);
       setToastMessage("Vote recorded! Thank you!");
     } catch (err: any) {
@@ -239,22 +231,19 @@ export default function CompanyDetail() {
         err.message?.includes("unique_violation") ||
         err.message?.includes("Already voted")
       ) {
-        // Duplicate: disable + show already voted message
         setHasVoted(true);
         message = "You've already voted for this company in the last 48 hours!";
       } else {
-        // Other error: keep buttons enabled
         setHasVoted(false);
       }
 
       setToastMessage(message);
     }
 
-    // Toast clears after 4 seconds
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  async function fetchDescendants(companyId: string): Promise<string[]> {
+  async function fetchDescendants(parentId: string): Promise<string[]> {
     let descendants: string[] = [];
 
     async function recurse(id: string) {
@@ -271,7 +260,7 @@ export default function CompanyDetail() {
       }
     }
 
-    await recurse(companyId);
+    await recurse(parentId);
     return descendants;
   }
 
@@ -324,7 +313,7 @@ export default function CompanyDetail() {
         {/* Three-column balanced layout on desktop */}
         <div className="hidden lg:flex justify-center gap-8 xl:gap-16">
           {/* Left box: How Ranks Are Formed */}
-          <div className="w-96 min-w-[360px] bg-gray-800/60 rounded-2xl p-7 border border-gray-700 text-center self-start mt-8">
+          <div className="w-96 min-w.[360px] bg-gray-800/60 rounded-2xl p-7 border border-gray-700 text-center self-start mt-8">
             <h3 className="text-3xl font-bold text-white mb-6">
               <span className="text-yellow-400">Ranks</span>,{" "}
               <span className="text-green-400">Vot</span>
@@ -352,8 +341,6 @@ export default function CompanyDetail() {
                 Mouse over tooltips show regional data for your region if
                 available.
               </p>
-
-              {/* Add more <p> blocks here anytime */}
             </div>
           </div>
 
@@ -493,7 +480,7 @@ export default function CompanyDetail() {
           </div>
         </div>
 
-        {/* === MOBILE LAYOUT - only visible on screens smaller than lg === */}
+        {/* MOBILE LAYOUT */}
         <div className="lg:hidden space-y-6 px-3 sm:px-6 pb-6 sm:pb-8">
           {/* Rank Score Section */}
           <div className="text-center bg-gray-900/40 rounded-2xl p-6 border border-gray-700 mt-6">
@@ -544,11 +531,11 @@ export default function CompanyDetail() {
                 onClick={() => handleVote("up")}
                 disabled={hasVoted}
                 className={`
-          w-full sm:w-auto min-w-[200px]
-          bg-green-700 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed
-          text-white px-12 py-7 rounded-2xl text-4xl sm:text-6xl font-bold
-          transition shadow-xl
-        `}
+                  w-full sm:w-auto min-w-[200px]
+                  bg-green-700 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed
+                  text-white px-12 py-7 rounded-2xl text-4xl sm:text-6xl font-bold
+                  transition shadow-xl
+                `}
               >
                 ↑ UP
               </button>
@@ -561,11 +548,11 @@ export default function CompanyDetail() {
                 onClick={() => handleVote("down")}
                 disabled={hasVoted}
                 className={`
-          w-full sm:w-auto min-w-[200px]
-          bg-red-700 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed
-          text-white px-12 py-7 rounded-2xl text-4xl sm:text-6xl font-bold
-          transition shadow-xl
-        `}
+                  w-full sm:w-auto min-w-[200px]
+                  bg-red-700 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed
+                  text-white px-12 py-7 rounded-2xl text-4xl sm:text-6xl font-bold
+                  transition shadow-xl
+                `}
               >
                 ↓ DOWN
               </button>
@@ -583,15 +570,10 @@ export default function CompanyDetail() {
               </p>
             )}
           </div>
-
-          {/* === The next two sections are REMOVED here on mobile === */}
-          {/* Assets and Ranks explanation are already available via the left/right popout panels */}
-          {/* If users want them, they tap the ← or → nubs halfway down the screen */}
         </div>
 
         {/* Mobile popout nubs & panels */}
         <div className="lg:hidden fixed inset-0 pointer-events-none">
-          {/* Left nub - moved higher (about 35-40% from top) */}
           <button
             onClick={() => setLeftOpen(!leftOpen)}
             className="pointer-events-auto fixed left-3 sm:left-4 top-[35%] sm:top-[38%] -translate-y-1/2 z-50 bg-gray-800/90 text-white p-4 sm:p-5 rounded-full shadow-2xl hover:bg-gray-700 transition text-2xl sm:text-3xl"
@@ -600,7 +582,6 @@ export default function CompanyDetail() {
             ←
           </button>
 
-          {/* Right nub - same height as left */}
           <button
             onClick={() => setRightOpen(!rightOpen)}
             className="pointer-events-auto fixed right-3 sm:right-4 top-[35%] sm:top-[38%] -translate-y-1/2 z-50 bg-gray-800/90 text-white p-4 sm:p-5 rounded-full shadow-2xl hover:bg-gray-700 transition text-2xl sm:text-3xl"
@@ -628,7 +609,6 @@ export default function CompanyDetail() {
                 ×
               </button>
             </div>
-            {/* Your full left box content (same as desktop) */}
             <div className="text-gray-300 text-base space-y-4 text-left">
               <div className="text-gray-300 text-base space-y-4 text-center">
                 <p>
@@ -651,8 +631,6 @@ export default function CompanyDetail() {
                   Mouse over tooltips show regional data for your region if
                   available.
                 </p>
-
-                {/* Add more <p> blocks here anytime */}
               </div>
             </div>
           </div>
@@ -664,12 +642,8 @@ export default function CompanyDetail() {
             rightOpen ? "translate-x-0" : "translate-x-full"
           } pointer-events-auto overflow-hidden`}
         >
-          {/* Key change: add overflow-y-auto + full height here */}
           <div className="h-full overflow-y-auto overscroll-contain">
             <div className="p-6 pb-12">
-              {" "}
-              {/* extra pb-12 gives breathing room at bottom */}
-              {/* Close button row */}
               <div className="flex justify-between items-center mb-6 sticky top-0 bg-gray-900 z-10 py-2 -mx-6 px-6 -mt-6">
                 <h3 className="text-2xl font-bold text-white">Assets</h3>
                 <button
@@ -679,7 +653,7 @@ export default function CompanyDetail() {
                   ×
                 </button>
               </div>
-              {/* ADD button row - make sticky too if you want */}
+
               <div className="flex items-center justify-center gap-4 mb-6">
                 <h3 className="text-2xl font-bold text-white">Assets</h3>
                 <button
@@ -689,7 +663,7 @@ export default function CompanyDetail() {
                   + ADD
                 </button>
               </div>
-              {/* Add form - this can now be long without breaking layout */}
+
               {showAddAsset && (
                 <div className="mt-6 p-5 bg-gray-950/70 rounded-xl border border-gray-700">
                   <AddCompanyForm
@@ -705,7 +679,7 @@ export default function CompanyDetail() {
                   />
                 </div>
               )}
-              {/* Assets list - grows as needed, scrolls with parent */}
+
               {assets.length === 0 ? (
                 <p className="text-gray-400 py-10 italic text-center">
                   No assets listed yet
@@ -722,13 +696,12 @@ export default function CompanyDetail() {
                   ))}
                 </ul>
               )}
-              {/* Optional: extra spacer at very bottom if needed */}
               <div className="h-8" />
             </div>
           </div>
         </div>
 
-        {/* Backdrop - click to close both */}
+        {/* Backdrop */}
         {(leftOpen || rightOpen) && (
           <div
             className="lg:hidden fixed inset-0 bg-black/50 z-40 pointer-events-auto"
@@ -740,7 +713,7 @@ export default function CompanyDetail() {
         )}
       </div>
 
-      {/* Company Hierarchy – unchanged */}
+      {/* Company Hierarchy */}
       <div className="mt-8 lg:mt-16">
         <h2 className="text-4xl font-bold text-center mb-8 lg:mb-12 text-white">
           Company Hierarchy
@@ -748,29 +721,21 @@ export default function CompanyDetail() {
 
         {/* Parents */}
         <div className="mb-12">
-          {hierarchy.filter((h) => h.child_id === parseInt(id as string))
-            .length === 0 ? (
+          {hierarchy.filter((h) => h.child_id === companyId).length === 0 ? (
             <div className="mb-12">
               <h3 className="text-3xl font-semibold text-center mb-8 text-gray-300">
                 Parent
               </h3>
 
-              {hierarchy.filter((h) => h.child_id === parseInt(id as string))
-                .length === 0 ? (
-                <div className="text-center">
-                  <p className="text-xl text-gray-500 mb-4">No parents found</p>
-                  <button
-                    onClick={() => setShowAddParentForm(true)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition shadow-md"
-                  >
-                    + Add Parent
-                  </button>
-                </div>
-              ) : (
-                <ul className="space-y-6 max-w-2xl mx-auto">
-                  {/* existing parent list */}
-                </ul>
-              )}
+              <div className="text-center">
+                <p className="text-xl text-gray-500 mb-4">No parents found</p>
+                <button
+                  onClick={() => setShowAddParentForm(true)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition shadow-md"
+                >
+                  + Add Parent
+                </button>
+              </div>
 
               {showAddParentForm && (
                 <div className="mt-8 p-6 bg-gray-900/70 rounded-xl border border-gray-700 max-w-xl mx-auto">
@@ -778,11 +743,11 @@ export default function CompanyDetail() {
                     Add Parent Company
                   </h4>
                   <AddParentForm
-                    childId={companyId}
-                    companies={allCompanies} // ← from earlier fetch or pass your list
+                    childId={companyId!}
+                    companies={allCompanies}
                     onSuccess={() => {
                       setShowAddParentForm(false);
-                      window.location.reload(); // or better: refetch hierarchy
+                      window.location.reload();
                     }}
                     onCancel={() => setShowAddParentForm(false)}
                   />
@@ -792,7 +757,7 @@ export default function CompanyDetail() {
           ) : (
             <ul className="space-y-6 max-w-2xl mx-auto">
               {hierarchy
-                .filter((h) => h.child_id === parseInt(id as string))
+                .filter((h) => h.child_id === companyId)
                 .map((h) => (
                   <li
                     key={h.parent_id}
@@ -802,8 +767,7 @@ export default function CompanyDetail() {
                       href={`/company/${h.parent_id}`}
                       className="hover:text-blue-400 transition"
                     >
-                      {h.parent?.company}{" "}
-                      {/* ← only add ?. here for null safety */}
+                      {h.parent?.company ?? "Unknown"}
                     </Link>
                     <span className="text-yellow-400 text-xl">
                       {getIndividualPercent(
@@ -822,15 +786,14 @@ export default function CompanyDetail() {
           <h3 className="text-3xl font-semibold text-center mb-8 text-gray-300">
             Subsidiaries
           </h3>
-          {hierarchy.filter((h) => h.parent_id === parseInt(id as string))
-            .length === 0 ? (
+          {hierarchy.filter((h) => h.parent_id === companyId).length === 0 ? (
             <p className="text-center text-xl text-gray-500">
               No subsidiaries found
             </p>
           ) : (
             <ul className="space-y-6 max-w-2xl mx-auto">
               {hierarchy
-                .filter((h) => h.parent_id === parseInt(id as string))
+                .filter((h) => h.parent_id === companyId)
                 .map((h) => (
                   <li
                     key={h.child_id}
@@ -840,7 +803,7 @@ export default function CompanyDetail() {
                       href={`/company/${h.child_id}`}
                       className="hover:text-blue-400 transition"
                     >
-                      {h.child?.company}
+                      {h.child?.company ?? "Unknown"}
                     </Link>
                     <span className="text-yellow-400 text-xl">
                       {getIndividualPercent(

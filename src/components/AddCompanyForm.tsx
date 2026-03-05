@@ -297,7 +297,6 @@ export default function AddCompanyForm({
                   text-blue-600                   // checkmark/accent color when checked
                   focus:ring-blue-500
                   focus:ring-2
-                  checked:bg-blue-600             // optional: darker fill when checked
                   checked:border-blue-600
                 "
               />
