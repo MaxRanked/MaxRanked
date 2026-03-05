@@ -313,7 +313,7 @@ export default function CompanyDetail() {
         {/* Three-column balanced layout on desktop */}
         <div className="hidden lg:flex justify-center gap-8 xl:gap-16">
           {/* Left box: How Ranks Are Formed */}
-          <div className="w-96 min-w.[360px] bg-gray-800/60 rounded-2xl p-7 border border-gray-700 text-center self-start mt-8">
+          <div className="w-96 min-w-[360px] bg-gray-800/60 rounded-2xl p-7 border border-gray-700 text-center self-start mt-8">
             <h3 className="text-3xl font-bold text-white mb-6">
               <span className="text-yellow-400">Ranks</span>,{" "}
               <span className="text-green-400">Vot</span>
