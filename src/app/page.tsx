@@ -18,7 +18,7 @@ export default function HomePage() {
       // Fetch companies
       const { data: companiesData, error: companyError } = await supabase
         .from("companies")
-        .select("id, company, vote_up, vote_down, country");
+        .select("id, company, vote_up, vote_down, country, tag");
 
       if (companyError) {
         console.error("Error fetching companies:", companyError);
@@ -220,7 +220,7 @@ export default function HomePage() {
                 {filteredCompanies.map((company) => (
                   <Link
                     key={company.id}
-                    href={`/company/${company.id}`}
+                    href={`/company/${company.tag}`}
                     className="
             snap-center flex-shrink-0 w-[85vw] max-w-sm lg:w-full lg:max-w-none
             bg-white dark:bg-gray-800
