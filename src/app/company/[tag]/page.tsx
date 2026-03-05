@@ -302,7 +302,7 @@ export default function CompanyDetail() {
 
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Company Name & Location */}
-        <h1 className="text-4xl xs:text-4.5xl sm:text-5xl md:text-6xl font-bold text-center mb-2 sm:mb-3 text-white">
+        <h1 className="text-4xl xs:text-4.5xl sm:text-5xl md:text-6xl font-bold text-center mb-2 sm:mb-3 text-gray-800 dark:text-white">
           {company.company}
         </h1>
         <p className="text-xl md:text-2xl text-center text-gray-400 mb-12">
@@ -385,7 +385,7 @@ export default function CompanyDetail() {
 
             {/* Vote Buttons */}
             <div>
-              <h3 className="text-3xl md:text-4xl font-bold text-gray-300 mb-8">
+              <h3 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-300 mb-8">
                 Have your say!
               </h3>
               <div className="flex justify-center items-center gap-12 md:gap-5">
@@ -715,44 +715,25 @@ export default function CompanyDetail() {
 
       {/* Company Hierarchy */}
       <div className="mt-8 lg:mt-16">
-        <h2 className="text-4xl font-bold text-center mb-8 lg:mb-12 text-white">
+        <h2 className="text-4xl font-bold text-center mb-8 lg:mb-12 text-gray-600 dark:text-white">
           Company Hierarchy
         </h2>
 
         {/* Parents */}
         <div className="mb-12">
+          <h3 className="text-3xl font-semibold text-center mb-8 text-gray-600 dark:text-gray-300">
+            Parent
+          </h3>
+
           {hierarchy.filter((h) => h.child_id === companyId).length === 0 ? (
-            <div className="mb-12">
-              <h3 className="text-3xl font-semibold text-center mb-8 text-gray-300">
-                Parent
-              </h3>
-
-              <div className="text-center">
-                <p className="text-xl text-gray-500 mb-4">No parents found</p>
-                <button
-                  onClick={() => setShowAddParentForm(true)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition shadow-md"
-                >
-                  + Add Parent
-                </button>
-              </div>
-
-              {showAddParentForm && (
-                <div className="mt-8 p-6 bg-gray-900/70 rounded-xl border border-gray-700 max-w-xl mx-auto">
-                  <h4 className="text-xl font-bold text-white mb-4 text-center">
-                    Add Parent Company
-                  </h4>
-                  <AddParentForm
-                    childId={companyId!}
-                    companies={allCompanies}
-                    onSuccess={() => {
-                      setShowAddParentForm(false);
-                      window.location.reload();
-                    }}
-                    onCancel={() => setShowAddParentForm(false)}
-                  />
-                </div>
-              )}
+            <div className="text-center">
+              <p className="text-xl text-gray-500 mb-4">No parents found</p>
+              <button
+                onClick={() => setShowAddParentForm(true)}
+                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition shadow-md"
+              >
+                + Add Parent
+              </button>
             </div>
           ) : (
             <ul className="space-y-6 max-w-2xl mx-auto">
@@ -779,11 +760,28 @@ export default function CompanyDetail() {
                 ))}
             </ul>
           )}
+
+          {showAddParentForm && (
+            <div className="mt-8 p-6 bg-gray-900/70 rounded-xl border border-gray-700 max-w-xl mx-auto">
+              <h4 className="text-xl font-bold text-white mb-4 text-center">
+                Add Parent Company
+              </h4>
+              <AddParentForm
+                childId={companyId!}
+                companies={allCompanies}
+                onSuccess={() => {
+                  setShowAddParentForm(false);
+                  window.location.reload(); // or refetch hierarchy data
+                }}
+                onCancel={() => setShowAddParentForm(false)}
+              />
+            </div>
+          )}
         </div>
 
         {/* Subsidiaries */}
         <div>
-          <h3 className="text-3xl font-semibold text-center mb-8 text-gray-300">
+          <h3 className="text-3xl font-semibold text-center mb-8 text-gray-500 dark:text-gray-300">
             Subsidiaries
           </h3>
           {hierarchy.filter((h) => h.parent_id === companyId).length === 0 ? (
