@@ -21,6 +21,7 @@ export default function AddCompanyForm({
   onSuccess,
   onCancel,
   forceAssetMode = false,
+  assetOwnerPreselect,
   onNameChange,
 }: Props) {
   const [name, setName] = useState(searchTerm);
@@ -28,6 +29,13 @@ export default function AddCompanyForm({
   useEffect(() => {
     setName(searchTerm); // Sync from parent to form
   }, []);
+
+  // Auto-fill owning company when forced asset mode (company page popup)
+  useEffect(() => {
+    if (forceAssetMode && assetOwnerPreselect) {
+      setParent(assetOwnerPreselect);
+    }
+  }, [forceAssetMode, assetOwnerPreselect]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
@@ -399,48 +407,59 @@ export default function AddCompanyForm({
           </div>
         )}
 
-        {/* Parent / Owning Company - with auto-suggest */}
-        <div className="relative">
-          <label className="block text-lg font-medium text-gray-700 mb-2">
-            {isAssetMode ? "Owning Company" : "Parent Company"}{" "}
-            <span className={isAssetMode ? "text-red-600" : "text-gray-500"}>
-              *
-            </span>
-          </label>
-          <input
-            type="text"
-            value={parent}
-            onChange={(e) => handleParentChange(e.target.value)}
-            onFocus={() => parent && handleParentChange(parent)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            placeholder={isAsset ? "Owner" : "Parent"}
-            required={isAssetMode}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-semibold text-gray-900 focus:outline-none focus:border-blue-500"
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            {isAssetMode
-              ? "Start typing to see matching companies (required)"
-              : "(optional) If this company has a parent/owner"}
-          </p>
+        {/* Parent / Owning Company */}
+        {!forceAssetMode ? (
+          // Main page: show editable field + suggestions
+          <div className="relative">
+            <label className="block text-lg font-medium text-gray-700 mb-2">
+              {isAssetMode ? "Owning Company" : "Parent Company"}{" "}
+              <span className={isAssetMode ? "text-red-600" : "text-gray-500"}>
+                {isAssetMode ? "*" : "(optional)"}
+              </span>
+            </label>
+            <input
+              type="text"
+              value={parent}
+              onChange={(e) => handleParentChange(e.target.value)}
+              onFocus={() => parent && handleParentChange(parent)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              placeholder={isAsset ? "Owner" : "Parent"}
+              required={isAssetMode}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-semibold text-gray-900 focus:outline-none focus:border-blue-500"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              {isAssetMode
+                ? "Start typing to see matching companies (required)"
+                : "(optional) If this company has a parent/owner"}
+            </p>
 
-          {/* Auto-suggest dropdown */}
-          {showSuggestions && parentSuggestions.length > 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-              {parentSuggestions.map((suggestion) => (
-                <div
-                  key={suggestion}
-                  onMouseDown={() => {
-                    setParent(suggestion);
-                    setShowSuggestions(false);
-                  }}
-                  className="px-4 py-3 hover:bg-blue-50 cursor-pointer text-gray-900 font-medium"
-                >
-                  {suggestion}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+            {/* Auto-suggest dropdown */}
+            {showSuggestions && parentSuggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                {parentSuggestions.map((suggestion) => (
+                  <div
+                    key={suggestion}
+                    onMouseDown={() => {
+                      setParent(suggestion);
+                      setShowSuggestions(false);
+                    }}
+                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer text-gray-900 font-medium"
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          // Company page asset mode: hide field, show hint
+          <div className="mb-6 text-center space-y-1">
+            <p className="text-gray-800">Adding asset to:</p>
+            <p className="text-green-800 font-bold">
+              {assetOwnerPreselect || "this company"}
+            </p>
+          </div>
+        )}
 
         {/* Submit */}
         <div className="text-center pt-6">

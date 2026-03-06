@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, notFound } from "next/navigation";
 import AddCompanyForm from "@/components/AddCompanyForm";
 import AddParentForm from "@/components/AddParentForm";
+import ShareDropdown from "@/components/ShareDropdown";
 
 export default function CompanyDetail() {
   const params = useParams();
@@ -309,6 +310,9 @@ export default function CompanyDetail() {
           {company.country || "Global"}
           {company.region && company.region !== "All" && ` (${company.region})`}
         </p>
+        <div className="flex justify-center mb-8">
+          <ShareDropdown company={company} />
+        </div>
 
         {/* Three-column balanced layout on desktop */}
         <div className="hidden lg:flex justify-center gap-8 xl:gap-16">
