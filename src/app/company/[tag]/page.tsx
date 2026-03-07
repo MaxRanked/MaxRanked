@@ -187,8 +187,8 @@ export default function CompanyDetail() {
           `
           parent_id,
           child_id,
-          parent:parent_id (company, vote_up, vote_down),
-          child:child_id (company, vote_up, vote_down)
+          parent:parent_id (company, vote_up, vote_down, tag),
+          child:child_id (company, vote_up, vote_down, tag)
         `,
         )
         .or(`parent_id.eq.${numericId},child_id.eq.${numericId}`);
@@ -749,7 +749,7 @@ export default function CompanyDetail() {
                     className="text-2xl font-bold text-gray-200 flex justify-between items-center bg-gray-800/30 p-6 rounded-xl hover:bg-gray-700/50 transition"
                   >
                     <Link
-                      href={`/company/${h.parent_id}`}
+                      href={`/company/${h.parent?.tag}`}
                       className="hover:text-blue-400 transition"
                     >
                       {h.parent?.company ?? "Unknown"}
@@ -802,7 +802,7 @@ export default function CompanyDetail() {
                     className="text-2xl font-bold text-gray-200 flex justify-between items-center bg-gray-800/30 p-6 rounded-xl hover:bg-gray-700/50 transition"
                   >
                     <Link
-                      href={`/company/${h.child_id}`}
+                      href={`/company/${h.child?.tag}`}
                       className="hover:text-blue-400 transition"
                     >
                       {h.child?.company ?? "Unknown"}
