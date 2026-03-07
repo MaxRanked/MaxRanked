@@ -35,11 +35,13 @@ export default function CompanyDetail() {
         company: string;
         vote_up: number | null;
         vote_down: number | null;
+        tag: string;
       } | null;
       child: {
         company: string;
         vote_up: number | null;
         vote_down: number | null;
+        tag: string;
       } | null;
     }>
   >([]);
@@ -181,16 +183,16 @@ export default function CompanyDetail() {
       }
 
       // Fetch hierarchy for display
+      const hierarchySelect = [
+        "parent_id",
+        "child_id",
+        "parent:parent_id (company, vote_up, vote_down, tag)",
+        "child:child_id (company, vote_up, vote_down, tag)",
+      ].join(", ");
+
       const { data: hierarchyData } = await supabase
         .from("company_hierarchies")
-        .select(
-          `
-          parent_id,
-          child_id,
-          parent:parent_id (company, vote_up, vote_down, tag),
-          child:child_id (company, vote_up, vote_down, tag)
-        `,
-        )
+        .select(hierarchySelect)
         .or(`parent_id.eq.${numericId},child_id.eq.${numericId}`);
 
       setHierarchy((hierarchyData as any) || []);
