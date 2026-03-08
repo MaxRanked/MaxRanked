@@ -313,7 +313,7 @@ export default function CompanyDetail() {
 
   return (
     <>
-      {loading || !company ? (
+      {!company ? (
         <p className="text-center text-gray-400 mt-20">
           Loading company details...
         </p>
@@ -322,38 +322,38 @@ export default function CompanyDetail() {
           <Head>
             {/* Basic SEO */}
             <title>
-              {company?.company ?? "Company"} on MaxRanked – Rank:{" "}
-              {getVotePercentage(company?.vote_up, company?.vote_down)}
+              {company.company} on MaxRanked – Rank:{" "}
+              {getVotePercentage(company.vote_up, company.vote_down)}
             </title>
             <meta
               name="description"
-              content={`Current rank: ${getVotePercentage(company?.vote_up, company?.vote_down)} (${company?.vote_up ?? 0} up / ${company?.vote_down ?? 0} down) for ${company?.company ?? "this company"}. Visit the site to add your vote!`}
+              content={`Current rank: ${getVotePercentage(company.vote_up, company.vote_down)} (${company.vote_up ?? 0} up / ${company.vote_down ?? 0} down) for ${company.company}. Visit the site to add your vote!`}
             />
 
             {/* Open Graph */}
             <meta
               property="og:title"
-              content={`${company?.company ?? "Company"} on MaxRanked`}
+              content={`${company.company} on MaxRanked`}
             />
             <meta
               property="og:description"
-              content={`Rank: ${getVotePercentage(company?.vote_up, company?.vote_down)} • ↑ ${company?.vote_up ?? 0} • ↓ ${company?.vote_down ?? 0}. Visit the site to add your vote!`}
+              content={`Rank: ${getVotePercentage(company.vote_up, company.vote_down)} • ↑ ${company.vote_up ?? 0} • ↓ ${company.vote_down ?? 0}. Visit the site to add your vote!`}
             />
             <meta property="og:type" content="website" />
             <meta
               property="og:url"
-              content={`https://maxranked.com/company/${company?.tag}`}
+              content={`https://maxranked.com/company/${company.tag}`}
             />
 
             {/* Twitter Cards */}
             <meta name="twitter:card" content="summary" />
             <meta
               name="twitter:title"
-              content={`${company?.company ?? "Company"} on MaxRanked`}
+              content={`${company.company} on MaxRanked`}
             />
             <meta
               name="twitter:description"
-              content={`Rank: ${getVotePercentage(company?.vote_up, company?.vote_down)} • Up: ${company?.vote_up ?? 0} • Down: ${company?.vote_down ?? 0}. Visit the site to add your vote!`}
+              content={`Rank: ${getVotePercentage(company.vote_up, company.vote_down)} • Up: ${company.vote_up ?? 0} • Down: ${company.vote_down ?? 0}. Visit the site to add your vote!`}
             />
 
             <meta property="og:site_name" content="MaxRanked" />
