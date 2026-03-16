@@ -44,7 +44,6 @@ type Props = {
   ownPercent: string;
   totalUp: number;
   totalDown: number;
-  getIndividualPercent: (up: number | null, down: number | null) => string;
 };
 
 export default function ClientComponent({
@@ -59,7 +58,6 @@ export default function ClientComponent({
   ownPercent,
   totalUp,
   totalDown,
-  getIndividualPercent,
 }: Props) {
   const [assets, setAssets] = useState(initialAssets);
   const [leftOpen, setLeftOpen] = useState(false);
