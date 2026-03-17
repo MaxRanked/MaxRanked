@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic'; // Or 'auto' — but force if votes chan
 // export const revalidate = 3600;
 
 export default async function Image({ params }: { params: { tag: string } }) {
-  const { tag } = params;
+  const resolvedParams = await params; // ← Await here!
+  const { tag } = resolvedParams;
 
   // Fetch minimal company data (keep it light — no heavy joins)
   const { data: company } = await supabase
