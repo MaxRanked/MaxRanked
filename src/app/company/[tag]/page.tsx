@@ -1,9 +1,8 @@
 import { supabase } from '@/lib/supabaseClient';
 import { notFound } from 'next/navigation';
-import Head from 'next/head';
 import Link from 'next/link';
 import ShareDropdown from '@/components/ShareDropdown';
-import ClientComponent from './ClientComponent'; // ← new import
+import ClientComponent from './ClientComponent';
 
 // Helper (can stay here or move to utils)
 
@@ -36,6 +35,56 @@ async function fetchDescendants(parentId: number): Promise<number[]> {
 
   await recurse(parentId);
   return descendants;
+}
+import type { Metadata } from 'next';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ tag: string }>;
+}): Promise<Metadata> {
+  const { tag } = await params;
+
+  const { data: company } = await supabase
+    .from('companies')
+    .select('company, vote_up, vote_down, tag')
+    .eq('tag', tag)
+    .single();
+
+  if (!company) {
+    // You can return fallback metadata or nothing
+    return {
+      title: 'Company Not Found – MaxRanked',
+      description: 'The requested company could not be found.',
+    };
+  }
+
+  const rankText = getVotePercentage(company.vote_up, company.vote_down);
+  const description = `Current rank: ${rankText} (${company.vote_up ?? 0} up / ${company.vote_down ?? 0} down) for ${company.company}. Visit the site to add your vote!`;
+
+  const url = `https://maxranked.com/company/${company.tag}`;
+
+  return {
+    title: `${company.company} on MaxRanked – Rank: ${rankText}`,
+    description,
+
+    openGraph: {
+      title: `${company.company} on MaxRanked`,
+      description: `Rank: ${rankText} • ↑ ${company.vote_up ?? 0} • ↓ ${company.vote_down ?? 0}. Visit the site to add your vote!`,
+      url,
+      siteName: 'MaxRanked',
+      type: 'website',
+      // Optional: add later when you have dynamic or static OG images
+      // images: [{ url: '/some-og-image.jpg', width: 1200, height: 630 }],
+    },
+
+    twitter: {
+      card: 'summary', // or 'summary_large_image' if you add an image later
+      title: `${company.company} on MaxRanked`,
+      description: `Rank: ${rankText} • Up: ${company.vote_up ?? 0} • Down: ${company.vote_down ?? 0}. Visit the site to add your vote!`,
+      // images: ['/some-twitter-image.jpg'],
+    },
+  };
 }
 
 export default async function CompanyDetail({ params }: { params: Promise<{ tag: string }> }) {
@@ -157,31 +206,6 @@ export default async function CompanyDetail({ params }: { params: Promise<{ tag:
 
   return (
     <>
-      <Head>
-        <title>
-          {company.company} on MaxRanked – Rank:{' '}
-          {getVotePercentage(company.vote_up, company.vote_down)}
-        </title>
-        <meta
-          name="description"
-          content={`Current rank: ${getVotePercentage(company.vote_up, company.vote_down)} (${company.vote_up ?? 0} up / ${company.vote_down ?? 0} down) for ${company.company}. Visit the site to add your vote!`}
-        />
-        <meta property="og:title" content={`${company.company} on MaxRanked`} />
-        <meta
-          property="og:description"
-          content={`Rank: ${getVotePercentage(company.vote_up, company.vote_down)} • ↑ ${company.vote_up ?? 0} • ↓ ${company.vote_down ?? 0}. Visit the site to add your vote!`}
-        />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={`https://maxranked.com/company/${company.tag}`} />
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content={`${company.company} on MaxRanked`} />
-        <meta
-          name="twitter:description"
-          content={`Rank: ${getVotePercentage(company.vote_up, company.vote_down)} • Up: ${company.vote_up ?? 0} • Down: ${company.vote_down ?? 0}. Visit the site to add your vote!`}
-        />
-        <meta property="og:site_name" content="MaxRanked" />
-      </Head>
-
       <ClientComponent
         company={company}
         companyId={companyId}
