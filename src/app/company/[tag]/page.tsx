@@ -74,12 +74,21 @@ export async function generateMetadata({
       url,
       siteName: 'MaxRanked',
       type: 'website',
+      images: [
+        {
+          url: `/company/${tag}/opengraph-image`, // Relative is fine with metadataBase set
+          width: 1200,
+          height: 630,
+          alt: `${company.company} ranking on MaxRanked`,
+        },
+      ],
       // Optional: add later when you have dynamic or static OG images
       // images: [{ url: '/some-og-image.jpg', width: 1200, height: 630 }],
     },
 
     twitter: {
-      card: 'summary', // or 'summary_large_image' if you add an image later
+      images: [`/company/${tag}/opengraph-image`],
+      card: 'summary_large_image', // or 'summary_large_image' if you add an image later
       title: `${company.company} on MaxRanked`,
       description: `Rank: ${rankText} • Up: ${company.vote_up ?? 0} • Down: ${company.vote_down ?? 0}. Visit the site to add your vote!`,
       // images: ['/some-twitter-image.jpg'],
