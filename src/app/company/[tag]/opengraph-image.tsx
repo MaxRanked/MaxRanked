@@ -9,15 +9,20 @@ export const dynamic = 'force-dynamic'; // Or 'auto' — but force if votes chan
 // export const revalidate = 3600;
 
 export default async function Image({ params }: { params: { tag: string } }) {
-  const resolvedParams = await params; // ← Await here!
-  const { tag } = resolvedParams;
+  const { tag } = await params;
+
+  console.log('OG image generating for tag:', tag);
 
   // Fetch minimal company data (keep it light — no heavy joins)
-  const { data: company } = await supabase
+  const { data: company, error } = await supabase
     .from('companies')
     .select('company, vote_up, vote_down')
     .eq('tag', tag)
     .single();
+
+  if (error) {
+    console.error('Supabase error in OG image:', error);
+  }
 
   if (!company) {
     // Fallback image content if not found
@@ -25,16 +30,18 @@ export default async function Image({ params }: { params: { tag: string } }) {
       <div
         style={{
           fontSize: 60,
-          color: 'black',
-          background: '#f0f0f0',
+          color: 'white',
+          background: '#333', // Darker fallback so it's not blinding white
           width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          textAlign: 'center',
+          padding: '40px',
         }}
       >
-        Company not found – MaxRanked
+        Company "{tag}" not found – MaxRanked
       </div>,
       { width: 1200, height: 630 }
     );
