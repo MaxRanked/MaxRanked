@@ -58,39 +58,66 @@ export default async function Image({ params }: { params: { tag: string } }) {
       style={{
         height: "100%",
         width: "100%",
-        display: "flex",
-        flexDirection: "column",
+        display: "flex", // Outer container: flex
+        flexDirection: "column", // Stack vertically
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(to bottom right, #1e3a8a, #3b82f6)", // Blue theme – customize!
-        fontSize: 48,
+        background: "linear-gradient(to bottom right, #1e3a8a, #3b82f6)",
         color: "white",
-        fontFamily: "sans-serif", // Or load custom font below
+        fontFamily: "sans-serif",
+        padding: "40px",
       }}
     >
-      <div style={{ fontSize: 80, fontWeight: "bold", marginBottom: 20 }}>
+      {/* Company name – single text child, but wrapped for safety */}
+      <div
+        style={{
+          display: "flex", // flex even if single child (harmless & safe)
+          fontSize: 80,
+          fontWeight: "bold",
+          marginBottom: 20,
+          textAlign: "center",
+        }}
+      >
         {company.company}
       </div>
-      <div style={{ fontSize: 120, fontWeight: "bold" }}>{rankText}</div>
-      <div style={{ fontSize: 48, marginTop: 30 }}>
-        ↑ {upvotes} • ↓ {downvotes}
+
+      {/* Rank – big & bold */}
+      <div
+        style={{
+          display: "flex",
+          fontSize: 120,
+          fontWeight: "bold",
+        }}
+      >
+        {rankText}
       </div>
-      <div style={{ fontSize: 32, marginTop: 40, opacity: 0.8 }}>
+
+      {/* Votes row */}
+      <div
+        style={{
+          display: "flex", // flex for side-by-side
+          fontSize: 48,
+          marginTop: 30,
+          gap: 40, // spacing between items
+        }}
+      >
+        <span>↑ {upvotes}</span>
+        <span>•</span>
+        <span>↓ {downvotes}</span>
+      </div>
+
+      {/* Bottom URL */}
+      <div
+        style={{
+          display: "flex",
+          fontSize: 32,
+          marginTop: 40,
+          opacity: 0.8,
+        }}
+      >
         maxranked.com/company/{tag}
       </div>
     </div>,
-    {
-      width: 1200,
-      height: 630,
-      // Optional: Add custom fonts (Google Fonts or self-hosted)
-      // fonts: [
-      //   {
-      //     name: 'Inter',
-      //     data: await fetch('https://.../Inter-Bold.ttf').then(res => res.arrayBuffer()),
-      //     style: 'normal',
-      //     weight: 700,
-      //   },
-      // ],
-    },
+    { width: 1200, height: 630 },
   );
 }
